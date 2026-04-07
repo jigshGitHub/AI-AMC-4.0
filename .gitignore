@@ -1,0 +1,132 @@
+# -----------------------------
+# Global Git ignore for this repository
+# - Covers common OS files, editors, Python virtual envs/artifacts,
+#   test/coverage artifacts, and Node/npm artifacts.
+# -----------------------------
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Windows recycle bin
+$RECYCLE.BIN/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Pytest
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Logs
+*.log
+
+# dotenv
+.env
+.env.*
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+*.swp
+*.swo
+*.tmp
+
+# -----------------------------
+# .NET / Visual Studio
+# -----------------------------
+
+# Visual Studio workspace and user-specific files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+TestResults/
+
+# Visual Studio database files
+*.sdf
+*.dbmdl
+
+# Rider and ReSharper
+.idea/
+*.DotSettings.user
+_ReSharper*/
+
+# Visual C++ generated files
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.ipch
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+# dotnet publish artifacts
+artifacts/
+publish/
+
+# User secrets / local settings (often contain secrets)
+secrets.json
+local.settings.json
+
+# IIS Express config
+**/.vs/**/applicationhost.config
+
+# Azure Functions
+local.settings.json
+
