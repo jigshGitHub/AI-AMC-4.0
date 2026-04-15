@@ -9,14 +9,14 @@ from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain.agents import create_agent
 
-# # setup log information
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s [%(levelname)s] %(message)s",
-#     handlers=[logging.StreamHandler(sys.stdout)],
-# )
-# logger = logging.getLogger("News Summarizer")
-# logger.info("Starting News Summarizer Agent...")
+# setup log information
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger("News Summarizer")
+logger.info("Starting News Summarizer Agent...")
 
 # load environment and varify
 load_dotenv()
@@ -24,25 +24,25 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key or api_key.startswith("sk-your"):
     logger.error("OPENAI_API_KEY not set! Copy .env.example to .env and add your key.")
     sys.exit(1)
-# logger.info("API key loaded successfully")
+logger.info("API key loaded successfully")
 
 gpt_model = os.getenv("GPT_MODEL")
 if not gpt_model or gpt_model.startswith("gpt*"):
     logger.error("gpt model not set! Copy .env.example to .env and set GPT_MODEL.")
     sys.exit(1)
-# logger.info("GPT Model retrieved successfully")
+logger.info("GPT Model retrieved successfully")
 
-# logger.info("All LangChain components imported")
+logger.info("All LangChain components imported")
 
-# logger.info("Initializing the LLM (OpenAI GPT)...")
+logger.info("Initializing the LLM (OpenAI GPT)...")
 llm = ChatOpenAI(
     model=gpt_model,
     temperature=0.7,
     verbose=True,
 )
-# logger.info(f"LLM initialized: model={gpt_model}, temperature=0.7")
+logger.info(f"LLM initialized: model={gpt_model}, temperature=0.7")
 
-# logger.info("Defining agent tools...")
+logger.info("Defining agent tools...")
 @tool
 def extract_news_contents(contents: str) -> str:
     """
@@ -51,7 +51,7 @@ def extract_news_contents(contents: str) -> str:
     Input should be the user's email contents or topic.
     Returns extracted contents.
     """
-    # logger.info(f"[Tool: extract_news_contents] Received contents: '{contents}'")
+    logger.info(f"[Tool: extract_news_contents] Received contents: '{contents}'")
 
     extract_prompt = PromptTemplate(
         input_variables=["contents"],
@@ -66,11 +66,11 @@ def extract_news_contents(contents: str) -> str:
     )
 
     formatted_prompt = extract_prompt.format(contents=contents)
-    #logger.info("[Tool: extract_news_contents] Sending prompt to LLM...")
+    logger.info("[Tool: extract_news_contents] Sending prompt to LLM...")
 
     response = llm.invoke(formatted_prompt)
 
-    #logger.info("[Tool: extract_news_contents] Contents extracted successfully!")
+    logger.info("[Tool: extract_news_contents] Contents extracted successfully!")
     return response.content
 
 @tool
@@ -79,7 +79,7 @@ def summarize_news_contents(extractd_content: str) -> str:
     Take extracted contents, create a 3–4 sentence news summary in simple language that anyone can understand — no jargon
     Returns a concise, clear news summary
     """
-    #logger.info("[Tool: summarize_news_contents] Summarizing extracted news contents...")
+    logger.info("[Tool: summarize_news_contents] Summarizing extracted news contents...")
     summarize_prompt = PromptTemplate(
         input_variables=["extractd_content"],
         template="""You are a senior news editor specialized in high-density factual synthesis..
@@ -97,17 +97,17 @@ def summarize_news_contents(extractd_content: str) -> str:
     )
 
     formatted_prompt = summarize_prompt.format(extractd_content=extractd_content)
-    #logger.info("[Tool: summarize_news_contents] Sending prompt to LLM for final sumarry...")
+    logger.info("[Tool: summarize_news_contents] Sending prompt to LLM for final sumarry...")
 
     response = llm.invoke(formatted_prompt)
 
-    #logger.info("[Tool: summarize_news_contents] Contents summarized successfully!")
+    logger.info("[Tool: summarize_news_contents] Contents summarized successfully!")
     return response.content
 
 tools = [extract_news_contents, summarize_news_contents]
-# logger.info(f"Tools registered: {[t.name for t in tools]}")
+logger.info(f"Tools registered: {[t.name for t in tools]}")
 
-# logger.info("Creating the agent...")
+logger.info("Creating the agent...")
 SYSTEM_PROMPT = """
 Role: You are a News Automation Agent responsible for summarizing long news article contents in easy to read concise summary.
 Core Objective: When a user gives you news article contents, use your defined tools extract core facts, and provide a structured summary by following these steps.:
@@ -127,11 +127,11 @@ def run_content_summarizer(news_contents: str) -> str:
     This function when invoked, it executes agent's ability to summarize long contents of news article in simple language summary.
     """
 
-    # logger.info("=" * 60)
-    # logger.info(f"PASTED NEWS ARTICLE CONTENTS: {news_contents}")
-    # logger.info("=" * 60)
-    # logger.info("Agent is now thinking... watch the tool-calling loop below!")
-    # logger.info("-" * 60)
+    logger.info("=" * 60)
+    logger.info(f"PASTED NEWS ARTICLE CONTENTS: {news_contents}")
+    logger.info("=" * 60)
+    logger.info("Agent is now thinking... watch the tool-calling loop below!")
+    logger.info("-" * 60)
 
     result = agent_graph.invoke(
         {"messages": [HumanMessage(content=news_contents)]}
@@ -139,9 +139,9 @@ def run_content_summarizer(news_contents: str) -> str:
 
     summarized_contents = result["messages"][-1].content
 
-    # logger.info("-" * 60)
-    # logger.info("Agent finished! Here's your summarized contents:")
-    # logger.info("=" * 60)
+    logger.info("-" * 60)
+    logger.info("Agent finished! Here's your summarized contents:")
+    logger.info("=" * 60)
 
     return summarized_contents
 
@@ -157,11 +157,21 @@ if __name__ == "__main__":
     while True:
         # news_contents = input("Please paste the contents of the news article: ")
         news_contents = """
-        In the People interview, Lee says, "I had what I thought was a hot flash. I got super sweaty and didn't feel like myself." She says that, later, after shooting, the symptoms progressed.
-        "I just felt very restless,” she says. “In one leg I kept feeling shooting pains,” adding, "I would hold my hand out, and it would just slowly collapse. I noticed that I had a tough time articulating and just enunciating. I thought, ‘Am I having a stroke?'"
-        An MRI confirmed that Lee had suffered an ischemic stroke. "As a physician I couldn't deny that I had slurred speech, that I was having weakness on one side, but I was like, ‘Well, this is a dream, right?' What essentially happened is I had a part of my brain that died."
-        While she improved with physical and occupational therapy over the next months, Lee says she suffered from PTSD following the incident. In the People article, she encourages others to watch their blood pressure, cholesterol and stress levels.
-        """
+        Ball was not called for a foul and play continued. Adebayo did not return because of a lower back injury, playing just 11 minutes.
+
+Afterward, Miami coach Erik Spoelstra said Ball should have been ejected.
+
+Ball apologized after the game and said he was disoriented on the play after getting hit in the head seconds before on a drive to the basket.
+
+The ninth-seeded Hornets play on the road against the loser of Wednesday’s night game between Orlando and Philadelphia as they look to snap a 10-year playoff drought.
+
+“We drew up a good play, I feel like. Just orchestrated it and it worked," Ball said of the winning shot.
+
+Ball was not asked about punching the mascot after the game; the video of it had not surfaced at that point.
+
+“The crowd was amazing," Ball said of the sold-out crowd. "Everyone who came out today was real loud, so it was a good crowd.”
+
+Charlotte was able to get to overtime after White hit an off-balanced 3-pointer from the corner with 10.8 seconds left to tie the game, and Miami's Tyler Herro missed a jumper at the end of regulation."""
         if not news_contents:
             print("The contents of the news article required to move forward\n")
             continue

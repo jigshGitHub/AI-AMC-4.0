@@ -1,12 +1,59 @@
-# AI-AMC-4.0
+# 📰 News Summarizer Agent
 
-Repository scaffold for the AI-AMC-4.0 project.
+An intelligent AI agent built with **LangChain** and **OpenAI** that extracts key factual data from long news articles and synthesizes them into concise, jargon-free summaries.
 
-This repo's `.gitignore` was updated to include ignores for common OS/editor artifacts, Python/Node files, and .NET / Visual Studio files (bin/, obj/, .vs/, TestResults/, NuGet packages, local.settings.json, etc.).
+## 🚀 Features
 
-Quick notes
-- Use a virtual environment for Python (e.g. `python -m venv .venv`) and do not commit it — `.gitignore` already excludes common venv folders.
-- For .NET development, build outputs (`bin/`, `obj/`) and IDE files (`.vs/`, user-specific `.user` files) are ignored.
-- If you use Azure Functions locally, keep secrets out of source control — `local.settings.json` is ignored.
+- **Two-Stage Processing**: Uses a specialized tool-calling agent to first extract raw facts and then generate a high-density summary.
+- **Fact-Focused Extraction**: Filters out editorial bias to focus on the Who, What, Where, When, and Why.
+- **Multi-line Support**: Custom input handling allows you to paste long, multi-paragraph articles directly into the terminal.
+- **Logging & Debugging**: Integrated logging to track agent reasoning and tool execution in real-time.
 
-If you want the README to include project-specific setup instructions (build steps, tests, how to run locally), tell me what stack(s) you're using and I will add a short Getting Started section.
+## 🛠️ Architecture
+
+The system uses a **LangChain Agent** equipped with two custom tools:
+1.  `extract_news_contents`: Distills raw data, stakeholders, and statistics from the source text.
+2.  `summarize_news_contents`: Converts extracted data into a "Action-Impact-Context" summary.
+
+## 📋 Prerequisites
+
+- Python 3.9+
+- OpenAI API Key
+
+## ⚙️ Installation & Setup
+
+1️⃣ Clone the Repository    
+    git clone https://github.com/jigshGitHub/AI-AMC-4.0
+    
+2️⃣ Create a Virtual Environment
+    VS Code / PowerShell:
+        python -m venv labenv
+
+3️⃣ Activate the Virtual Environment
+    powershell
+        ./labenv/bin/Activate.ps1
+    vscode
+        .\labenv\Scripts\activate
+    💡  Note: If blocked, run Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process first
+
+4️⃣ Install Dependencies
+    pip install -r requirements.txt
+
+5️⃣ Configure Environment Variables
+    Copy the example environment file
+        cp .env.example .env
+    Edit .env and enter your credentials
+        OPENAI_API_KEY=your_sk_key_here
+        GPT_MODEL=gpt-4o
+
+6️⃣ Change Directory
+    cd news_summarizer
+
+7️⃣ Execute the Agent
+    python run.py
+
+🖥️ How to Use
+Copy the full text of a news article.
+Paste it into the terminal prompt.
+Press ENTER THRICE to signal you are finished pasting.
+Type quit or exit to close the agent
