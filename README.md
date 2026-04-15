@@ -41,7 +41,7 @@ The system uses a **LangChain Agent** equipped with two custom tools:
 
 5️⃣ Configure Environment Variables
     Copy the example environment file
-        cp .env.example .env
+        cp .env_example .env
     Edit .env and enter your credentials
         OPENAI_API_KEY=your_sk_key_here
         GPT_MODEL=gpt-4o
