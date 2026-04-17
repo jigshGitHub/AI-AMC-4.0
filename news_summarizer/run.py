@@ -9,6 +9,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain.agents import create_agent
 
+os.system('cls' if os.name=='nt' else 'clear')
 # setup log information
 logging.basicConfig(
     level=logging.INFO,
@@ -57,7 +58,7 @@ def extract_news_contents(contents: str) -> str:
         input_variables=["contents"],
         template="""You are an objective, neutral news analyst specializing in factual synthesis.
         Contents: {contents}
-        Task: Analyze the provided news article contents to extract core information. Do not add outside information or personal interpretation.        
+        Task: Analyze the provided news article contents to extract core information. Do not add outside information or personal interpretation.
         Provide extracted structured output with following
         Key Factual Points: 3-5 bullet points of verifiable facts (Who, What, Where, When, Why).
         Key Stakeholders: List the primary organizations, public figures, or groups involved.
@@ -84,7 +85,7 @@ def summarize_news_contents(extractd_content: str) -> str:
         input_variables=["extractd_content"],
         template="""You are a senior news editor specialized in high-density factual synthesis..
         Contents: {extractd_content}
-        Task: Analyze the provided extracted content and generate a structured summary. Do not add outside information or personal interpretation.        
+        Task: Analyze the provided extracted content and generate a structured summary. Do not add outside information or personal interpretation.
         Output Format:
         TL;DR (1 Sentence): A high-impact summary using the "Action-Impact-Context" formula.
         Key Points: 3-5 concise bullet points of verifiable facts.
@@ -145,8 +146,9 @@ def run_content_summarizer(news_contents: str) -> str:
 
     return summarized_contents
 
-# MMain function
+# Main function
 if __name__ == "__main__":
+
     print("\n" + "=" * 60)
     print("  NEWS SUMMARIZER AGENT")
     print("  Powered by LangChain + OpenAI")
@@ -154,24 +156,16 @@ if __name__ == "__main__":
     print("\nPaste the contents of long news article, agent will extract the key facts and then writes a concise summary in simple, clear language.\n")
     print("Type 'quit' to exit.\n")
 
+
+
+
     while True:
         # news_contents = input("Please paste the contents of the news article: ")
-        news_contents = """
-        Ball was not called for a foul and play continued. Adebayo did not return because of a lower back injury, playing just 11 minutes.
 
-Afterward, Miami coach Erik Spoelstra said Ball should have been ejected.
+        print("Paste your content and enter Ctrl+Z then enter to finish:")
+        news_contents = sys.stdin.read()
+        news_contents = news_contents.strip()
 
-Ball apologized after the game and said he was disoriented on the play after getting hit in the head seconds before on a drive to the basket.
-
-The ninth-seeded Hornets play on the road against the loser of Wednesday’s night game between Orlando and Philadelphia as they look to snap a 10-year playoff drought.
-
-“We drew up a good play, I feel like. Just orchestrated it and it worked," Ball said of the winning shot.
-
-Ball was not asked about punching the mascot after the game; the video of it had not surfaced at that point.
-
-“The crowd was amazing," Ball said of the sold-out crowd. "Everyone who came out today was real loud, so it was a good crowd.”
-
-Charlotte was able to get to overtime after White hit an off-balanced 3-pointer from the corner with 10.8 seconds left to tie the game, and Miami's Tyler Herro missed a jumper at the end of regulation."""
         if not news_contents:
             print("The contents of the news article required to move forward\n")
             continue
@@ -192,4 +186,5 @@ Charlotte was able to get to overtime after White hit an off-balanced 3-pointer 
             logger.error(f"Something went wrong: {e}")
             print(f"\nError: {e}")
             print("Please check your API key and try again.\n")
-        break
+
+
