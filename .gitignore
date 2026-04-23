@@ -4,6 +4,7 @@
 #   test/coverage artifacts, and Node/npm artifacts.
 # -----------------------------
 
+chroma*/
 # OS files
 .DS_Store
 Thumbs.db
