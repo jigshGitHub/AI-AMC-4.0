@@ -4,6 +4,7 @@ import json
 import operator
 import os
 import config
+import applogging
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict
@@ -16,6 +17,7 @@ from langgraph.graph import END, START, StateGraph
 
 
 llm = ChatOpenAI(model=config.LLM_MODEL, temperature=config.TEMPERATURE)
+logger = applogging.get_logger("real_estate_app")
 
 class RealEstateState(BaseModel):
     """
@@ -44,7 +46,66 @@ class RealEstateState(BaseModel):
 
     messages: Annotated[list[str], operator.add] = []
 
-def understand_question(state: HealthFitnessState) -> dict:
+def format_context(documents: list[Document]) -> str:
+    """Combine retrieved chunks into one prompt-ready context string."""
+    if not documents:
+        return "No relevant context was retrieved from the index."
+
+    return "\n\n---\n\n".join(document.page_content for document in documents)
+
+
+def format_sources(documents: list[Document]) -> str:
+    """Format citation metadata into a readable source list."""
+    if not documents:
+        return "No sources retrieved."
+
+    formatted_sources = []
+    for index, document in enumerate(documents, start=1):
+        source_file = document.metadata.get("source", "Unknown source")
+        page_number = document.metadata.get("page", "?")
+        page_label = page_number + 1 if isinstance(page_number, int) else page_number
+        formatted_sources.append(f"[{index}] {source_file} (Page {page_label})")
+
+    return "\n".join(formatted_sources)
+
+def build_embedding_model() -> HuggingFaceEmbeddings:
+    """Create the local embedding model used to search Chroma."""
+    return HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
+
+
+def load_vector_store() -> Chroma:
+    """Open the local Chroma vector database from disk."""
+    if not os.path.exists(config.CHROMA_DB_DIR):
+        raise FileNotFoundError(
+            f"Vector database '{config.CHROMA_DB_DIR}/' was not found. Run ingestion first."
+        )
+
+    return Chroma(
+        persist_directory=config.CHROMA_DB_DIR,
+        embedding_function=build_embedding_model(),
+    )
+
+def search_index(state: RealEstateState) -> dict:
+    """
+    Retrieval node: search the Chroma index for relevant chunks.
+
+    This is the key node you wanted to show your students explicitly.
+    """
+    vector_store = load_vector_store()
+    retrieved_documents = vector_store.similarity_search(state.user_question, k=config.TOP_K)
+
+    retrieved_context = format_context(retrieved_documents)
+    retrieved_sources = format_sources(retrieved_documents)
+
+    logger.info(f"[search_index] Found {len(retrieved_documents)} chunk(s)")
+    return {
+        "retrieved_documents": retrieved_documents,
+        "retrieved_context": retrieved_context,
+        "retrieved_sources": retrieved_sources,
+        "messages": [f"[search_index] Retrieved {len(retrieved_documents)} chunk(s)"],
+    }
+
+def understand_question(state: RealEstateState) -> dict:
     """
     First node: interpret the user's question before retrieval.
     """
@@ -77,7 +138,7 @@ def build_real_estate_agent():
     graph = StateGraph(RealEstateState)
 
     graph.add_node("understand_question", understand_question)
-    # graph.add_node("search_index", search_index)
+    graph.add_node("search_index", search_index)
     # graph.add_node("health_specialist", health_specialist)
     # graph.add_node("gym_specialist", gym_specialist)
     # graph.add_node("fitness_specialist", fitness_specialist)
@@ -86,7 +147,7 @@ def build_real_estate_agent():
     # graph.add_node("detailed_answer", detailed_answer)
 
     graph.add_edge(START, "understand_question")
-    # graph.add_edge("understand_question", "search_index")
+    graph.add_edge("understand_question", "search_index")
 
     # graph.add_edge("search_index", "health_specialist")
     # graph.add_edge("search_index", "gym_specialist")
@@ -108,7 +169,7 @@ def build_real_estate_agent():
     # graph.add_edge("quick_answer", END)
     # graph.add_edge("detailed_answer", END)
 
-    graph.add_edge("understand_question", END)
+    graph.add_edge("search_index", END)
 
     return graph.compile()
 
