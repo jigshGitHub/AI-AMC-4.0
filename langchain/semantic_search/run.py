@@ -118,7 +118,6 @@ if __name__ == "__main__":
     print("=" * 60)
     print("\nThis is a simple example of how to load a PDF document and prepare it for semantic search using LangChain.\n")
     print("The PDF document is loaded and split into smaller chunks, which can then be embedded and indexed for efficient retrieval.\n")
-    print("Loaded documents:")
 
     # perform_ingetion(DATA_DIR)
     vector_store = Chroma(
