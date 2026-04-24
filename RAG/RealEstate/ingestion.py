@@ -127,4 +127,6 @@ def run_ingestion() -> Chroma | None:
 
 
 if __name__ == "__main__":
+    # Clear the console
+    os.system('cls' if os.name=='nt' else 'clear')
     run_ingestion()
