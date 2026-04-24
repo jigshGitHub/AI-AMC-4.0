@@ -3,7 +3,6 @@
 # - Covers common OS files, editors, Python virtual envs/artifacts,
 #   test/coverage artifacts, and Node/npm artifacts.
 # -----------------------------
-
 chroma*/
 # OS files
 .DS_Store

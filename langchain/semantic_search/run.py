@@ -86,16 +86,9 @@ def create_vector_store(chunks: list[Document], embedding_model) -> Chroma:
     """Create a Chroma vector store from the given text chunks and embedding model."""
     return Chroma.from_documents(documents=chunks, embedding=embedding_model, persist_directory=CHROMA_DB_DIR)
 
-if __name__ == "__main__":
-    print("\n" + "=" * 60)
-    print("  SEMANTIC SEARCH WITH LANGCHAIN")
-    print("  Powered by LangChain + OpenAI")
-    print("=" * 60)
-    print("\nThis is a simple example of how to load a PDF document and prepare it for semantic search using LangChain.\n")
-    print("The PDF document is loaded and split into smaller chunks, which can then be embedded and indexed for efficient retrieval.\n")
-    print("Loaded documents:")
+def perform_ingetion(data_dir: str) :
 
-    documents = load_source_documents(DATA_DIR)
+    documents = load_source_documents(data_dir)
 
     # for doc in documents:
     #     print(f"- {doc.metadata['title']} (length: {len(doc.page_content)})")
@@ -117,3 +110,24 @@ if __name__ == "__main__":
 
     print()
     print("Ingestion complete. Your documents are ready for retrieval.")
+
+if __name__ == "__main__":
+    print("\n" + "=" * 60)
+    print("  SEMANTIC SEARCH WITH LANGCHAIN")
+    print("  Powered by LangChain + OpenAI")
+    print("=" * 60)
+    print("\nThis is a simple example of how to load a PDF document and prepare it for semantic search using LangChain.\n")
+    print("The PDF document is loaded and split into smaller chunks, which can then be embedded and indexed for efficient retrieval.\n")
+    print("Loaded documents:")
+
+    # perform_ingetion(DATA_DIR)
+    vector_store = Chroma(
+        persist_directory=CHROMA_DB_DIR,
+        embedding_function=get_embedding_model(EMBEDDING_MODEL)
+    )
+    results = vector_store.similarity_search(
+         "How were Nike's margins impacted in 2023?", k = 3
+    )
+    for doc in results:
+        print(f"Content: {doc.page_content[:200]}...")
+        print(f"Source: {doc.metadata.get('source')}\n")
