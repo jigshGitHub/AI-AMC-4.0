@@ -113,6 +113,9 @@ def load_source_documents(data_dir: str = config.DATA_DIR) -> list[Document]:
     return documents
 
 def run_ingestion() -> Chroma | None:
+    if not config.DATA_DIR:
+        logger.error("DATA_DIR is not set. Please set it in config.py or check .env file and try again.")
+        return None
     documents = load_source_documents(config.DATA_DIR)
     if not documents:
         return None
@@ -120,7 +123,7 @@ def run_ingestion() -> Chroma | None:
 
     chunks = split_documents(documents)
     logger.success("Split documents DONE")
-    
+
     vector_store = create_vector_store(chunks)
     logger.success("Ingestion complete. Documents are ready for retrieval.")
     return vector_store

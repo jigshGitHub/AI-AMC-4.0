@@ -3,11 +3,11 @@
 # - Covers common OS files, editors, Python virtual envs/artifacts,
 #   test/coverage artifacts, and Node/npm artifacts.
 # -----------------------------
-chroma*/
+[Cc]hroma*/
+*.bin
 # OS files
 .DS_Store
 Thumbs.db
-
 # Windows recycle bin
 $RECYCLE.BIN/
 
