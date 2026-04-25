@@ -4,9 +4,19 @@ h1 { margin:0 0 1rem 0; font-size:1.25rem; }
 .chat { height:400px; overflow:auto; border:1px solid #e5e7eb; padding:1rem; border-radius:6px; background:#ffffff; }
 .msg { margin-bottom:0.75rem; }
 .msg.user { text-align:right; }
-.msg .bubble { display:inline-block; padding:0.5rem 0.75rem; border-radius:8px; max-width:80%; }
+.msg .bubble { display:inline-block; padding:0.5rem 0.75rem; border-radius:8px; max-width:80%; white-space:normal; word-wrap:break-word; word-break:break-word; }
 .msg.user .bubble { background:#e0f2fe; color:#0369a1; }
 .msg.bot .bubble { background:#f1f5f9; color:#0f172a; }
+
+/* Paragraph styling inside bubbles */
+.msg .bubble p { margin: 0 0 0.5rem 0; }
+.msg .bubble p:last-child { margin-bottom: 0; }
 form { display:flex; gap:0.5rem; margin-top:0.75rem }
 input { flex:1; padding:0.5rem 0.75rem; border-radius:6px; border:1px solid #d1d5db }
 button { padding:0.5rem 0.75rem; border-radius:6px; background:#111827; color:white; border:none }
+
+/* Sources panel */
+.sources-panel { margin-top:0.75rem; }
+.toggle-sources { background:#0369a1; color:white; border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer }
+.sources-content { margin-top:0.5rem; border:1px dashed #e5e7eb; padding:0.75rem; border-radius:6px; background:#fff; max-height:200px; overflow:auto }
+.source-item { margin-bottom:0.5rem; font-size:0.9rem; color:#374151 }

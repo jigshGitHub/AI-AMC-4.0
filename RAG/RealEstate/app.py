@@ -33,8 +33,9 @@ def chat():
         return jsonify({"success": False, "error": "Empty question"}), 400
 
     try:
-        answer = query_rag(question)
-        return jsonify({"success": True, "answer": answer})
+        result = query_rag(question)
+        # result is expected to be a dict with final_answer and retrieved_sources
+        return jsonify({"success": True, "answer": result.get("final_answer", ""), "sources": result.get("retrieved_sources", "")})
     except FileNotFoundError as e:
         return jsonify({"success": False, "error": str(e)}), 500
     except Exception as e:

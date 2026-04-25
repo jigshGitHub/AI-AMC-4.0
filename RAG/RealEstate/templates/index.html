@@ -10,6 +10,10 @@
     <div class="container">
       <h1>RealEstate RAG Chat</h1>
       <div id="chat" class="chat"></div>
+      <div id="sources-panel" class="sources-panel" style="display:none;">
+        <button id="toggle-sources" class="toggle-sources">Show sources</button>
+        <div id="sources-content" class="sources-content" style="display:none;"></div>
+      </div>
       <form id="chat-form">
         <input id="question" placeholder="Ask about your documents..." autocomplete="off" />
         <button type="submit">Send</button>

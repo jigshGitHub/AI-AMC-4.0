@@ -356,16 +356,19 @@ def build_real_estate_agent():
 
     return graph.compile()
 
-def query_rag(question: str) -> str:
-    """Run one user question through the real estate LangGraph agent."""
+def query_rag(question: str) -> dict:
+    """Run one user question through the real estate LangGraph agent.
+
+    Returns a dict with keys:
+    - final_answer: str
+    - retrieved_sources: str (optional)
+    """
     app = build_real_estate_agent()
-    result = app.invoke(
-        {
-            "user_question": question,
-            "messages": [],
-        }
-    )
-    return result["final_answer"]
+    result = app.invoke({"user_question": question, "messages": []})
+    return {
+        "final_answer": result.get("final_answer", ""),
+        "retrieved_sources": result.get("retrieved_sources", ""),
+    }
 
 if __name__ == "__main__":
     # Clear the console
