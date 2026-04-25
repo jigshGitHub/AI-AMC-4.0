@@ -41,7 +41,7 @@ def print_setup_instructions() -> None:
 def run_chat_loop() -> None:
     """Start the interactive question-answering loop."""
     print()
-    print("Ask a question about your documents.")
+    print("Ask a question about your Real Estate needs.")
     print("Type 'quit' to exit.")
     print()
 
@@ -71,7 +71,7 @@ def main() -> None:
         print_setup_instructions()
         return
 
-    logger.info(f"Using vector database at '{config.CHROMA_DB_DIR}/'.")
+    # logger.info(f"Using vector database at '{config.CHROMA_DB_DIR}/'.")
     run_chat_loop()
 
 

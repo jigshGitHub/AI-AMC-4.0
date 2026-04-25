@@ -125,7 +125,10 @@ python ingestion.py
 ```powershell
 python run.py
 ```
-
+Use following sample prompts:
+- how is the real estate market for investment in east coast area specifically in new york
+- how much risks are involved
+- as first home buyer, guide me from finding new home to sign a good deal in northen virginia area.
 Troubleshooting & tips
 - "Vector database not found" — ensure `CHROMA_DB_DIR` points at the folder created by `ingestion.py` and contains Chroma files. The ingestion script logs where it saves the DB.
 - Empty retrieval results — check that the embedding model is compatible and that your PDFs contain selectable text (not scanned images).
@@ -138,18 +141,6 @@ pytest -q
 ```
 - Embedding / LLM API mismatches — the code calls `.invoke(...).content` on LLM responses; if your LLM wrapper uses `.text` or returns a different structure, adapt the calls in `agent.py`.
 - Scanned PDFs — use OCR (Tesseract or commercial APIs) to extract text before ingestion.
-
-Next improvements you can make (low-risk steps)
-- Add a `requirements.txt` or `pyproject.toml` pinned to tested versions.
-- Add CLI args to `run.py` for `--data-dir` and `--db-dir`.
-- Add retries and `429` handling to LLM calls.
-- Add a small test that runs ingestion on a tiny PDF and asserts the Chroma DB is created.
-- Change `TEMPERATURE` parsing in `config.py` to float: `float(os.getenv("TEMPERATURE", 0.0))`.
-
-If you want, I can:
-- create a `requirements.txt` with the likely packages and pinned versions,
-- add a small unit test for `ingestion.run_ingestion()` (using a tiny sample PDF), or
-- tighten `agent.py`'s planner JSON parsing with retries and schema validation.
 
 ---
 Generated on: 2026-04-24
