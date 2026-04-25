@@ -129,6 +129,7 @@ Use following sample prompts:
 - how is the real estate market for investment in east coast area specifically in new york
 - how much risks are involved
 - as first home buyer, guide me from finding new home to sign a good deal in northen virginia area.
+
 Troubleshooting & tips
 - "Vector database not found" — ensure `CHROMA_DB_DIR` points at the folder created by `ingestion.py` and contains Chroma files. The ingestion script logs where it saves the DB.
 - Empty retrieval results — check that the embedding model is compatible and that your PDFs contain selectable text (not scanned images).
