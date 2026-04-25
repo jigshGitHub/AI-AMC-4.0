@@ -1,0 +1,12 @@
+body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f7fafc; color:#111827; }
+.container { max-width:800px; margin:2rem auto; padding:1rem; background:white; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+h1 { margin:0 0 1rem 0; font-size:1.25rem; }
+.chat { height:400px; overflow:auto; border:1px solid #e5e7eb; padding:1rem; border-radius:6px; background:#ffffff; }
+.msg { margin-bottom:0.75rem; }
+.msg.user { text-align:right; }
+.msg .bubble { display:inline-block; padding:0.5rem 0.75rem; border-radius:8px; max-width:80%; }
+.msg.user .bubble { background:#e0f2fe; color:#0369a1; }
+.msg.bot .bubble { background:#f1f5f9; color:#0f172a; }
+form { display:flex; gap:0.5rem; margin-top:0.75rem }
+input { flex:1; padding:0.5rem 0.75rem; border-radius:6px; border:1px solid #d1d5db }
+button { padding:0.5rem 0.75rem; border-radius:6px; background:#111827; color:white; border:none }

@@ -130,6 +130,19 @@ Use following sample prompts:
 - how much risks are involved
 - as first home buyer, guide me from finding new home to sign a good deal in northen virginia area.
 
+Web application (demo)
+----------------------
+There is a minimal Flask webapp included with a lightweight UI.
+
+To run the webapp (after you have a Chroma DB created by ingestion):
+
+```powershell
+cd RAG\RealEstate\
+python app.py
+```
+
+Open http://localhost:8501 in your browser and ask questions. The frontend POSTs to `/api/chat` which calls `agent.query_rag` under the hood.
+
 Troubleshooting & tips
 - "Vector database not found" — ensure `CHROMA_DB_DIR` points at the folder created by `ingestion.py` and contains Chroma files. The ingestion script logs where it saves the DB.
 - Empty retrieval results — check that the embedding model is compatible and that your PDFs contain selectable text (not scanned images).
