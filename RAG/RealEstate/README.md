@@ -77,7 +77,7 @@ Environment (variables from `config.py`)
 - LLM_MODEL: (string) model identifier used by `ChatOpenAI` wrapper in this repo.
 - DEBUG: (bool) enable debug logging.
 - TOP_K: (int) number of chunks to retrieve (defaults to 4).
-- TEMPERATURE: (int in code) sampling temperature for LLM; typically a float in [0,1], but `config.py` currently casts to int — set a small integer (0 or 1) or update config to use float.
+- TEMPERATURE: (float) sampling temperature for LLM; a value between 0.0 and 1.0. `config.py` now parses this as a float and defaults to `0.0` for deterministic outputs.
 - CHUNK_SIZE / CHUNK_OVERLAP: ints controlling chunking (defaults in `config.py`: 1000 / 200).
 
 Quick start (PowerShell)
@@ -91,10 +91,10 @@ python -m venv .venv
 
 2. Install dependencies
 
-If this repo has a `requirements.txt` you should use it. If not, install the typical packages used here:
+This project includes a `requirements.txt` inside `RAG/RealEstate` with the likely dependencies used by the example. Use it to install pinned packages for the example.
 
 ```powershell
-pip install python-dotenv langchain chromadb pypdf langchain-huggingface langchain-openai langchain-community langgraph
+pip install -r RAG\RealEstate\requirements.txt
 ```
 
 3. Configure environment variables
@@ -130,6 +130,12 @@ Troubleshooting & tips
 - "Vector database not found" — ensure `CHROMA_DB_DIR` points at the folder created by `ingestion.py` and contains Chroma files. The ingestion script logs where it saves the DB.
 - Empty retrieval results — check that the embedding model is compatible and that your PDFs contain selectable text (not scanned images).
 - Planner JSON parse errors — the planner expects strict JSON output; noisy LLM completions will force fallback to a quick answer. Consider constraining the model temperature (0) and adding a JSON schema enforcement step.
+- Tests — basic unit tests for `agent.pick_response_mode` were added under `RAG/RealEstate/tests/`. These use `pytest` and monkeypatch the `llm.invoke` method to simulate clean/noisy responses. To run them:
+
+```powershell
+cd RAG\RealEstate
+pytest -q
+```
 - Embedding / LLM API mismatches — the code calls `.invoke(...).content` on LLM responses; if your LLM wrapper uses `.text` or returns a different structure, adapt the calls in `agent.py`.
 - Scanned PDFs — use OCR (Tesseract or commercial APIs) to extract text before ingestion.
 
