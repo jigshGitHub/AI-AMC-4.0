@@ -19,6 +19,34 @@ from langgraph.graph import END, START, StateGraph
 llm = ChatOpenAI(model=config.LLM_MODEL, temperature=config.TEMPERATURE)
 logger = applogging.get_logger("real_estate_app")
 
+
+def _llm_text(response) -> str:
+    """Normalize different LLM wrapper responses to a plain text string.
+
+    Different SDKs expose the model output in different attributes. This
+    helper tries common attribute names and falls back to str(response).
+    """
+    if response is None:
+        return ""
+    # Common attribute names used by different wrappers
+    for attr in ("content", "text", "response", "data"):
+        val = getattr(response, attr, None)
+        if isinstance(val, str) and val:
+            return val
+        # sometimes content is a list or dict
+        if isinstance(val, list) and val:
+            first = val[0]
+            if isinstance(first, str):
+                return first
+            if isinstance(first, dict) and "text" in first:
+                return first.get("text", "")
+
+    # fallback: try string conversion
+    try:
+        return str(response)
+    except Exception:
+        return ""
+
 class RealEstateState(BaseModel):
     """
     Shared state that flows through the LangGraph application.
@@ -118,13 +146,43 @@ def pick_response_mode(state: RealEstateState) -> dict:
         f'{{"needs_detailed_answer": true, "reason": "one sentence"}}'
     )
 
-    try:
-        result = json.loads(response.content)
-        needs_detailed_answer = bool(result["needs_detailed_answer"])
-        answer_reason = str(result["reason"])
-    except (json.JSONDecodeError, KeyError, TypeError):
-        needs_detailed_answer = False
-        answer_reason = "Could not parse planner output, defaulting to a quick answer."
+    # Robust JSON parsing: LLMs may include surrounding text. Extract the
+    # first JSON object found in the response and parse it. If parsing fails
+    # once, prompt the model to reply with strict JSON and try again.
+    raw = _llm_text(response)
+
+    def _extract_json(s: str):
+        s = (s or "").strip()
+        start = s.find("{")
+        end = s.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return None
+        candidate = s[start : end + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            return None
+
+    parsed = _extract_json(raw)
+    needs_detailed_answer = False
+    answer_reason = "Could not parse planner output, defaulting to a quick answer."
+
+    if parsed is None:
+        # Ask the model to re-output strict JSON only
+        retry_prompt = (
+            "Please reply strictly with JSON only, with the keys: needs_detailed_answer (true/false) and reason (one sentence).\n"
+            "Example: {\"needs_detailed_answer\": true, \"reason\": \"user asked for step-by-step plan\"}"
+        )
+        retry_resp = llm.invoke(retry_prompt)
+        parsed = _extract_json(_llm_text(retry_resp))
+
+    if parsed is not None:
+        try:
+            needs_detailed_answer = bool(parsed.get("needs_detailed_answer", False))
+            answer_reason = str(parsed.get("reason", ""))
+        except Exception:
+            needs_detailed_answer = False
+            answer_reason = "Planner returned unexpected JSON fields."
 
     return {
         "needs_detailed_answer": needs_detailed_answer,
