@@ -22,22 +22,16 @@ def read_all_files(folder_path):
                 #     print(f"--- Content of {filename} ---")
                 #     print(content)
                 #     print("-" * 20)
-                suffix = os.path.splitext(filename)[1].lower()
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                        tmp.write(file.file.read())
-                        tmp.flush()
-                        if suffix == '.pdf':
-                            print(f"Reading pdf file {filename}")
-                            # with pdfplumber.open(tmp.name) as pdf:
-                            #     return "\n".join(page.extract_text() or "" for page in pdf.pages)
-                        elif suffix in ['.docx', '.doc']:
-                            print(f"Reading Eord document file {filename}")
-                            # doc = docx.Document(tmp.name)
-                            # return "\n".join([para.text for para in doc.paragraphs])
-                        else:
-                            return tmp.read().decode('utf-8', errors='ignore')
-
+                texts = ""
+                if filename.endswith('.pdf'):
+                    print(f"Reading pdf file {filename}")
+                    with pdfplumber.open(file_path) as pdf:
+                        texts = "\n".join(page.extract_text() or "" for page in pdf.pages)
+                elif filename.endswith('.docx'):
+                    print(f"Reading Eord document file {filename}")
+                    doc = docx.Document(file_path)
+                    texts = "\n".join([para.text for para in doc.paragraphs])
+                print(texts[:200])
             except Exception as e:
                 print(f"Could not read file {filename}: {e}")
 
