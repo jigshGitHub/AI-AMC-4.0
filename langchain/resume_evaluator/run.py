@@ -22,7 +22,26 @@ llm = ChatOpenAI(
     temperature=0.7,
     verbose=True,
 )
+sample_jd = """
+Conceives, designs, and tests logical structure to meet program requirements. Writes programs according to specifications provided. Builds, deploys and maintains programs, Web Site pages and applications. Develops and improves site navigation and applications. Responsible for the design, development, and configuration of software systems to meet market and/or client requirements. Updates, repairs, modifies, and expands existing computer programs. Writes, tests, and maintains computer programs. Develops code using Java, C#, HTML, Javascript, or other programming languages.
 
+Responsible for design and development of Java code for a large-scale Federal IT Program.
+Provides technical site maintenance and advice on moderately complex issues related to animation, search engine techniques, link integrity, navigation, browsers, graphics, and other technical web developments.
+Prepares functional specifications from which programs will be written and then designs, codes, debugs, and documents programs.
+Develops the requirements of a product from inception to conclusion. Tests, debugs, and refines the software to produce the required product
+Designs user interfaces of interactive web applications including ADA 508, and cross browser compliance.
+Maintains compliance with standards and conventions in developing programs.
+Develops required specifications for simple to moderately complex programs or problems.
+Conducts systems tests, monitors test results, and takes appropriate corrective action for the non-routine issues.
+Creates coded unit tests and works with Testers/Information Assurance to address program and/or security findings.
+Prepares required documentation, including block diagrams, logic flow charts and software program documentation.
+Minimum Qualifications
+
+Bachelor’s Degree in Computer Science, Information Systems or a related field or equivalent relevant experience.
+2+ years of experience with programming or web development activities.
+Active Secret Clearance
+Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
+"""
 logger = applogging.get_logger("resume_app")
 
 @tool
@@ -105,6 +124,7 @@ def evaluate_resumes(folder_path, job_description):
     agent_graph = create_resume_evaluation_agent(job_description)
 
     counter = 0 
+    output_summary = []
     # Loop through every file in the directory
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -113,12 +133,12 @@ def evaluate_resumes(folder_path, job_description):
             try:
                 file_contents = ""
 
+                logger.info(f"Evaluating file {filename}")
+
                 if filename.endswith('.pdf'):
-                    logger.info(f"Reading pdf file {filename}")
                     with pdfplumber.open(file_path) as pdf:
                         file_contents = "\n".join(page.extract_text() or "" for page in pdf.pages)
                 elif filename.endswith('.docx'):
-                    logger.info(f"Reading word document file {filename}")
                     doc = docx.Document(file_path)
                     file_contents = "\n".join([para.text for para in doc.paragraphs])
 
@@ -126,19 +146,23 @@ def evaluate_resumes(folder_path, job_description):
                     {"messages": [HumanMessage(content=file_contents)]}
                 )
 
-                summarized_contents = result["messages"][-1].content
-                logger.info(summarized_contents)
-                print(f"=" * 60)
+                summarized_contents = result["messages"][-1].content + "\n" + f"=" * 60
+
+                logger.info(f"DONE: Evaluating file {filename}")
+                #logger.info(summarized_contents)
+                output_summary.append(summarized_contents)
                 counter += 1
                 if counter > 0: 
                     break  # Remove this break to process all files in the folder
             except Exception as e:
                 logger.error(f"Could not read file {filename}: {e}")
 
+    print(output_summary)
+
 if __name__ == "__main__":
     os.system('cls' if os.name=='nt' else 'clear')
     while True:
-        job_description = input("Paste your job description :").strip()
+        job_description = input("Paste your job description, to continue with sample JD, just type C or C :").strip()
         # job_description = sys.stdin.read()
 
         if not job_description:
@@ -149,27 +173,10 @@ if __name__ == "__main__":
             logger.info("Goodbye!")
             break
 
+        if job_description.lower() == "c":           
+            job_description = sample_jd
+
         try:
-            job_description = """
-            Conceives, designs, and tests logical structure to meet program requirements. Writes programs according to specifications provided. Builds, deploys and maintains programs, Web Site pages and applications. Develops and improves site navigation and applications. Responsible for the design, development, and configuration of software systems to meet market and/or client requirements. Updates, repairs, modifies, and expands existing computer programs. Writes, tests, and maintains computer programs. Develops code using Java, C#, HTML, Javascript, or other programming languages.
-
-            Responsible for design and development of Java code for a large-scale Federal IT Program.
-            Provides technical site maintenance and advice on moderately complex issues related to animation, search engine techniques, link integrity, navigation, browsers, graphics, and other technical web developments.
-            Prepares functional specifications from which programs will be written and then designs, codes, debugs, and documents programs.
-            Develops the requirements of a product from inception to conclusion. Tests, debugs, and refines the software to produce the required product
-            Designs user interfaces of interactive web applications including ADA 508, and cross browser compliance.
-            Maintains compliance with standards and conventions in developing programs.
-            Develops required specifications for simple to moderately complex programs or problems.
-            Conducts systems tests, monitors test results, and takes appropriate corrective action for the non-routine issues.
-            Creates coded unit tests and works with Testers/Information Assurance to address program and/or security findings.
-            Prepares required documentation, including block diagrams, logic flow charts and software program documentation.
-            Minimum Qualifications
-
-            Bachelor’s Degree in Computer Science, Information Systems or a related field or equivalent relevant experience.
-            2+ years of experience with programming or web development activities.
-            Active Secret Clearance
-            Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
-            """
             job_description = job_description.strip()
             evaluate_resumes('./resume_files', job_description)
         except Exception as e:
