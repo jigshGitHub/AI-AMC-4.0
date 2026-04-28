@@ -29,7 +29,7 @@ logger = applogging.get_logger("resume_app")
 def extract_resume_contents(contents: str) -> str:
     """
     Use this tool FIRST when the resume content is provided.
-    Extracts key information from the resume content to facilitate structured evaluation and to identify sections like Contact details, 
+    Extracts key information from the resume content to facilitate structured evaluation and to identify sections like Contact details,
     Core Qualifications, Hard Skills, Relevant Achievements, Soft Skills, and Culture Fit.
     """
     extract_prompt = PromptTemplate(
@@ -39,7 +39,7 @@ def extract_resume_contents(contents: str) -> str:
         Task: Analyze the provided resume contents to extract core information.
         Do not add outside information or personal interpretation.
         Provide extracted structured output with following
-        Contact Details, Core Qualifications, Hard Skills Match, Relevant Achievements, Soft Skills & Culture Fit etc.
+        Contact Details including Full name, Email address and Phone Number, Core Qualifications, Hard Skills Match, Relevant Achievements, Soft Skills & Culture Fit etc.
         Attributed Perspectives: If the article contains quotes or opinions, attribute them clearly (e.g., "Source X claimed...")."""
     )
 
@@ -56,24 +56,16 @@ def analyze_resume_contents(extracted_content: str, job_description: str) -> str
         extracted_content: Extracted contents of resume.
         job_description: Job description to evalate against the resume contents.
     """
-    
-    logger.info(f"[Tool: extract_resume_contents] Received JD: '{job_description}'")
+
+    # logger.info(f"[Tool: extract_resume_contents] Received JD: '{job_description}'")
 
     analyze_prompt = PromptTemplate(
         input_variables=["extracted_content", "job_description"],
         template="""You are a Human resource specialist for recruiting candidates in your company.
         Contents: {extracted_content}
         Job Description: {job_description}
-        Task: Analyze the provided extracted content against the job descirption provide and generate a structured summary. 
+        Task: Analyze the provided extracted content against the job descirption provided and generate a structured summary.
         Do not add outside information or personal interpretation.
-        Provide the analysis in following out put format:
-        Match Score: A percentage (0-100%) based on how well the candidate meets the "Must-Have" requirements.
-        Executive Summary: A 3-sentence overview of the candidate’s profile relative to this job.
-        Strengths: Bullet points of where the candidate exceeds or perfectly hits JD requirements.
-        Gaps: Specific required skills or experiences that are missing or under-represented.
-        Interview Verdict: A "Strong Yes," "Neutral," or "No" recommendation with a one-sentence justification.
-        Constraint:
-        Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
         """
     )
 
@@ -81,29 +73,28 @@ def analyze_resume_contents(extracted_content: str, job_description: str) -> str
     response = llm.invoke(formatted_prompt)
     return response.content
 
-
-
 def create_resume_evaluation_agent(job_description: str):
 
     tools = [extract_resume_contents, analyze_resume_contents]
-    
-    # SYSTEM_PROMPT ="""
-    #             You are an expert recruiter. Your task is to extract resume contents. As a recruiter you have following job descripton \n
-    #             JobDescription: {job_description} 
-    #             Use extract_resume_contents to extract Core Qualifications, Hard Skills Match, Relevant Achievements, Soft Skills & Culture Fit etc.
-    #             Constraint: Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. 
-    #             """
+
     SYSTEM_PROMPT ="""
                 You are an expert recruiter. Your task is to extract resume contents and then evaluate its alignment with a
-                provided Job Description (JD). You must provide a structured, objective summary that highlights the candidate's fitness 
+                provided Job Description (JD). You must provide a structured, objective summary that highlights the candidate's fitness
                 for the specific role priovided in job description.
                 Job Description: {job_description}
-                First use extract_resume_contents to extract Contact details, Core Qualifications, Hard Skills Match, Relevant Achievements, Soft Skills & Culture Fit etc.
-                Then use analyze_resume_contents to synthesize the extracted information into a concise evaluation of the candidate's suitability for the job description provided.
-                Constraint: Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
+                First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation of the candidate's suitability for the job description provided.
+                Output format:
+                Candidate Name: Full name of the candidate and other contact details if any
+                Match Score: A percentage (0-100%) based on how well the candidate meets the "Must-Have" requirements.
+                Executive Summary: A 3-sentence overview of the candidate’s profile relative to this job.
+                Strengths: Bullet points of where the candidate exceeds or perfectly hits JD requirements.
+                Gaps: Specific required skills or experiences that are missing or under-represented.
+                Interview Verdict: A "Yes," "Neutral," or "No" recommendation with a one-sentence justification.
+                Constraint:
+                Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
                 """
 
-    agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=True)
+    agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False)
     return  agent_graph
 
 def evaluate_resumes(folder_path, job_description):
@@ -112,6 +103,8 @@ def evaluate_resumes(folder_path, job_description):
         logger.error("The specified folder does not exist.")
         return
     agent_graph = create_resume_evaluation_agent(job_description)
+
+    counter = 0 
     # Loop through every file in the directory
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -136,11 +129,13 @@ def evaluate_resumes(folder_path, job_description):
                 summarized_contents = result["messages"][-1].content
                 logger.info(summarized_contents)
                 print(f"=" * 60)
-                break  # Remove this break to process all files in the folder
+                counter += 1
+                if counter > 0: 
+                    break  # Remove this break to process all files in the folder
             except Exception as e:
                 logger.error(f"Could not read file {filename}: {e}")
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     os.system('cls' if os.name=='nt' else 'clear')
     while True:
         job_description = input("Paste your job description :").strip()
@@ -164,7 +159,7 @@ if __name__ == "__main__":
             Develops the requirements of a product from inception to conclusion. Tests, debugs, and refines the software to produce the required product
             Designs user interfaces of interactive web applications including ADA 508, and cross browser compliance.
             Maintains compliance with standards and conventions in developing programs.
-            Develops required specifications for simple to moderately complex programs or problems.  
+            Develops required specifications for simple to moderately complex programs or problems.
             Conducts systems tests, monitors test results, and takes appropriate corrective action for the non-routine issues.
             Creates coded unit tests and works with Testers/Information Assurance to address program and/or security findings.
             Prepares required documentation, including block diagrams, logic flow charts and software program documentation.
@@ -174,7 +169,7 @@ if __name__ == "__main__":
             2+ years of experience with programming or web development activities.
             Active Secret Clearance
             Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
-            """        
+            """
             job_description = job_description.strip()
             evaluate_resumes('./resume_files', job_description)
         except Exception as e:
