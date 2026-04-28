@@ -1,5 +1,4 @@
 
-from asyncio.log import logger
 import os
 import sys
 import pdfplumber
@@ -14,6 +13,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain.agents import create_agent
+from typing import List
+from pydantic import BaseModel, Field
 
 load_dotenv()
 llm_model = os.getenv("LLM_MODEL")
@@ -22,6 +23,17 @@ llm = ChatOpenAI(
     temperature=0.7,
     verbose=True,
 )
+class ResumeEvaluation(BaseModel):
+    """Schema for the structured resume evaluation output."""
+    candidate_details: str = Field(description="Full name and contact details of the candidate")
+    match_score: int = Field(description="Match percentage (0-100) based on job description")
+    executive_summary: str = Field(description="A 3-sentence overview of the candidate’s fitness")
+    strengths: List[str] = Field(description="Bullet points of matching skills/experience")
+    gaps: List[str] = Field(description="Missing skills or under-represented experience")
+    recommendations: List[str] = Field(description="Actionable advice to improve the resume for this role")
+    interview_verdict: str = Field(description="'Yes', 'Neutral', or 'No' with a 1-sentence justification")
+
+
 sample_jd = """
 Conceives, designs, and tests logical structure to meet program requirements. Writes programs according to specifications provided. Builds, deploys and maintains programs, Web Site pages and applications. Develops and improves site navigation and applications. Responsible for the design, development, and configuration of software systems to meet market and/or client requirements. Updates, repairs, modifies, and expands existing computer programs. Writes, tests, and maintains computer programs. Develops code using Java, C#, HTML, Javascript, or other programming languages.
 
@@ -62,7 +74,7 @@ def extract_resume_contents(contents: str) -> str:
         Attributed Perspectives: If the article contains quotes or opinions, attribute them clearly (e.g., "Source X claimed...")."""
     )
 
-    formatted_prompt = extract_prompt.format(contents=contents, job_description=job_description)
+    formatted_prompt = extract_prompt.format(contents=contents)
     response = llm.invoke(formatted_prompt)
 
     return response.content
@@ -83,7 +95,7 @@ def analyze_resume_contents(extracted_content: str, job_description: str) -> str
         template="""You are a Human resource specialist for recruiting candidates in your company.
         Contents: {extracted_content}
         Job Description: {job_description}
-        Task: Analyze the provided extracted content against the job descirption provided and generate a structured summary.
+        Task: Analyze the provided extracted content against the job descirption and generate a structured summary.
         Do not add outside information or personal interpretation.
         """
     )
@@ -101,19 +113,21 @@ def create_resume_evaluation_agent(job_description: str):
                 provided Job Description (JD). You must provide a structured, objective summary that highlights the candidate's fitness
                 for the specific role priovided in job description.
                 Job Description: {job_description}
-                First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation of the candidate's suitability for the job description provided.
-                Output format:
-                Candidate Name: Full name of the candidate and other contact details if any
-                Match Score: A percentage (0-100%) based on how well the candidate meets the "Must-Have" requirements.
-                Executive Summary: A 3-sentence overview of the candidate’s profile relative to this job.
-                Strengths: Bullet points of where the candidate exceeds or perfectly hits JD requirements.
-                Gaps: Specific required skills or experiences that are missing or under-represented.
-                Interview Verdict: A "Yes," "Neutral," or "No" recommendation with a one-sentence justification.
-                Constraint:
-                Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
+                First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation 
+                of the candidate's suitability for the job description provided.
+                Constraint:Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
+                Finally, you MUST provide your answer in the specified structured JSON format.
                 """
+                # Output format:
+                # Candidate Name: Full name of the candidate and other contact details if any
+                # Match Score: A percentage (0-100%) based on how well the candidate meets the "Must-Have" requirements.
+                # Executive Summary: A 3-sentence overview of the candidate’s profile relative to this job.
+                # Strengths: Bullet points of where the candidate exceeds or perfectly hits JD requirements.
+                # Gaps: Specific required skills or experiences that are missing or under-represented.
+                # Interview Verdict: A "Yes," "Neutral," or "No" recommendation with a one-sentence justification.
+                # """
 
-    agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False)
+    agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False,response_format=ResumeEvaluation)
     return  agent_graph
 
 def evaluate_resumes(folder_path, job_description):
@@ -146,11 +160,19 @@ def evaluate_resumes(folder_path, job_description):
                     {"messages": [HumanMessage(content=file_contents)]}
                 )
 
-                summarized_contents = result["messages"][-1].content + "\n" + f"=" * 60
+                if "structured_response" in result:
+                    evaluation = result["structured_response"]
+                    print("\n--- EVALUATION JSON ---")
+                    print(evaluation.model_dump_json(indent=2))
+                    output_summary.append(evaluation)
+                else:
+                    print("\n--- FINAL MESSAGE ---")
+                    print(result["messages"][-1].content)
+                    
 
                 logger.info(f"DONE: Evaluating file {filename}")
                 #logger.info(summarized_contents)
-                output_summary.append(summarized_contents)
+                
                 counter += 1
                 if counter > 0: 
                     break  # Remove this break to process all files in the folder
