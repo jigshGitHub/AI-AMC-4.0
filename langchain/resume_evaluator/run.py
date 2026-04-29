@@ -113,7 +113,7 @@ def create_resume_evaluation_agent(job_description: str):
                 provided Job Description (JD). You must provide a structured, objective summary that highlights the candidate's fitness
                 for the specific role priovided in job description.
                 Job Description: {job_description}
-                First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation 
+                First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation
                 of the candidate's suitability for the job description provided.
                 Constraint:Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
                 Finally, you MUST provide your answer in the specified structured JSON format.
@@ -137,7 +137,7 @@ def evaluate_resumes(folder_path, job_description):
         return
     agent_graph = create_resume_evaluation_agent(job_description)
 
-    counter = 0 
+    counter = 0
     output_summary = []
     # Loop through every file in the directory
     for filename in os.listdir(folder_path):
@@ -162,24 +162,38 @@ def evaluate_resumes(folder_path, job_description):
 
                 if "structured_response" in result:
                     evaluation = result["structured_response"]
-                    print("\n--- EVALUATION JSON ---")
-                    print(evaluation.model_dump_json(indent=2))
+                    # print("\n--- EVALUATION JSON ---")
+                    # print(evaluation.model_dump_json(indent=2))
                     output_summary.append(evaluation)
                 else:
-                    print("\n--- FINAL MESSAGE ---")
-                    print(result["messages"][-1].content)
-                    
+                    output_summary.append(result["messages"][-1].content)
+
 
                 logger.info(f"DONE: Evaluating file {filename}")
                 #logger.info(summarized_contents)
-                
+
                 counter += 1
-                if counter > 0: 
+                if counter > 3:
                     break  # Remove this break to process all files in the folder
             except Exception as e:
                 logger.error(f"Could not read file {filename}: {e}")
 
-    print(output_summary)
+    print("\n--- FINAL EVALUATION ---")
+    for evaluation in output_summary:
+        print(f"Candidate Name: {evaluation.candidate_details}")
+        print(f"Match Score: {evaluation.match_score}%")
+        print(f"Executive Summary: {evaluation.executive_summary}")
+        print("Strengths:")
+        for strength in evaluation.strengths:
+            print(f"- {strength}")
+        print("Gaps:")
+        for gap in evaluation.gaps:
+            print(f"- {gap}")
+        print("Recommendations:")
+        for rec in evaluation.recommendations:
+            print(f"- {rec}")
+        print(f"Interview Verdict: {evaluation.interview_verdict}")
+        print("\n-------------------------------------------------\n")
 
 if __name__ == "__main__":
     os.system('cls' if os.name=='nt' else 'clear')
@@ -195,7 +209,7 @@ if __name__ == "__main__":
             logger.info("Goodbye!")
             break
 
-        if job_description.lower() == "c":           
+        if job_description.lower() == "c":
             job_description = sample_jd
 
         try:
