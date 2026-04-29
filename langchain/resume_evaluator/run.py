@@ -1,3 +1,8 @@
+"""
+This resume evaluator agent uses two tools first it scans resume contents and then makes the analysis.
+Look for the counter logic to scan how many files int the folder.
+It uses OpenAI endpoints 
+"""
 
 import os
 import sys

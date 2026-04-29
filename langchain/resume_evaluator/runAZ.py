@@ -1,13 +1,19 @@
+"""
+This resume evaluator agent scans resume contents to analyze the match
+Look for the counter logic to scan how many files int the folder.
+It uses AZURE Foundry project endpoint endpoints 
+"""
 import os
-
+import applogging
+import pdfplumber
+import docx
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential
 from langchain_azure_ai.chat_models import AzureAIOpenAIApiChatModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
+from typing import List
 
 class ResumeEvaluation(BaseModel):
     """Schema for the structured resume evaluation output."""
@@ -39,38 +45,108 @@ Bachelor’s Degree in Computer Science, Information Systems or a related field 
 Active Secret Clearance
 Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
 """
-
+logger = applogging.get_logger("resume_app")
 load_dotenv()
-llm = AzureAIOpenAIApiChatModel(
-	project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT"),
-	credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
-	model = os.getenv("LLM_MODEL"),
-)
 
-parser = PydanticOutputParser(pydantic_object=Celebrity)
+def evaluate_resumes(folder_path, job_description):
+    
+    if not os.path.exists(folder_path):
+        logger.error("Folder not found.")
+        return
+    
+    llm = AzureAIOpenAIApiChatModel(
+        project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT"),
+        credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
+        model = os.getenv("LLM_MODEL"),
+    )
 
-prompt = PromptTemplate(
-    template="Answer the user query.\n{format_instructions}\n{query}",
-    input_variables=["query"],
-    partial_variables={"format_instructions": parser.get_format_instructions()},
-)
+    parser = PydanticOutputParser(pydantic_object=ResumeEvaluation)
+
+    prompt = PromptTemplate(
+        template="Answer the user prompt.\n{format_instructions}\n{prompt}",
+        input_variables=["prompt"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+
+    chain = prompt | llm | parser
+    output_summary = []
+    counter = 0
+
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        file_contents = ""
+
+        try:
+            if filename.endswith('.pdf'):
+                with pdfplumber.open(file_path) as pdf:
+                    file_contents = "\n".join(page.extract_text() or "" for page in pdf.pages)
+            elif filename.endswith('.docx'):
+                doc = docx.Document(file_path)
+                file_contents = "\n".join([para.text for para in doc.paragraphs])
+
+            if not file_contents.strip():
+                continue
+
+            # Direct invocation for structured extraction
+            user_prompt = f"""
+            You are an expert recruiter. Compare the Resume below against the Job Description.
+            
+            JOB DESCRIPTION:
+            {job_description}
+            
+            RESUME:
+            {file_contents}
+            """                        
+            response = chain.invoke({"prompt": user_prompt})
+
+            output_summary.append(response)
+            logger.info(f"Evaluated {filename}")
+
+            counter += 1
+            if counter > 3:
+                break
+
+        except Exception as e:
+            logger.error(f"Error processing {filename}: {e}")
+
+    # Final Print Loop
+    for evaluation in output_summary:
+        print(f"Candidate Name: {evaluation.candidate_details}")
+        print(f"Match Score: {evaluation.match_score}%")
+        print(f"Executive Summary: {evaluation.executive_summary}")
+        print("Strengths:")
+        for strength in evaluation.strengths:
+            print(f"- {strength}")
+        print("Gaps:")
+        for gap in evaluation.gaps:
+            print(f"- {gap}")
+        print("Recommendations:")
+        for rec in evaluation.recommendations:
+            print(f"- {rec}")
+        print(f"Interview Verdict: {evaluation.interview_verdict}")
+        print("\n-------------------------------------------------\n")
 
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-    
-    # 4. Chain the components
-    chain = prompt | llm | parser
-    
-    try:
-        query = "Who is AB in bollywood?"
-        response = chain.invoke({"query": query})
-        
-        print("--- CLEAN STRUCTURED OUTPUT ---")
-        print(f"Name: {response.full_details}")
-        print(f"Known For: {response.known_for}")
-        print(f"Summary: {response.executive_summary}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
+    while True:
+        job_description = input("Paste your job description, to continue with sample JD, just type C or C :").strip()        
+
+        if not job_description:
+            logger.error("The contents of the job description are required to move forward\n")
+            continue
+
+        if job_description.lower() in ("quit", "exit", "q"):
+            logger.info("Goodbye!")
+            break
+
+        if job_description.lower() == "c":
+            job_description = sample_jd
+
+        try:
+            job_description = job_description.strip()
+            evaluate_resumes('./resume_files', job_description)
+        except Exception as e:
+            logger.error(f"\nError: {e}")
+            logger.info("Please check your API key and try again.\n")
 

@@ -1,3 +1,8 @@
+"""
+This resume evaluator agent does not use any tool but with just simple prmpt it analyze the resume.
+Look for the counter logic to scan how many files int the folder.
+It uses OpenAI endpoints 
+"""
 import os
 import pdfplumber
 import docx
