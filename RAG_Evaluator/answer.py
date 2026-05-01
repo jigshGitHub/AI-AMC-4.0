@@ -5,8 +5,8 @@ from __future__ import annotations
 from rouge_score import rouge_scorer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from models import AnswerEvalInput, AnswerMetrics
-from utils import cosine_sim
+from RAG_Evaluator.models import AnswerEvalInput, AnswerMetrics
+from RAG_Evaluator.utils import cosine_sim
 
 try:  # Prefer the maintained fuzzy matching package.
     from thefuzz import fuzz

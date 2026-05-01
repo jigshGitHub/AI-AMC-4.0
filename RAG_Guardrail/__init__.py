@@ -1,8 +1,8 @@
 """Public exports for the RAG evaluation package."""
 
-from RAG_Evaluator.answer import AnswerEvaluator
-from RAG_Evaluator.llm_judge import LLMJudge
-from RAG_Evaluator.models import (
+from answer import AnswerEvaluator
+from llm_judge import LLMJudge
+from models import (
     AnswerEvalInput,
     AnswerMetrics,
     LLMJudgeMetrics,
@@ -11,7 +11,7 @@ from RAG_Evaluator.models import (
     SearchMetrics,
     SearchResult,
 )
-from RAG_Evaluator.search import SearchEvaluator
+from search import SearchEvaluator
 
 __all__ = [
     "AnswerEvalInput",

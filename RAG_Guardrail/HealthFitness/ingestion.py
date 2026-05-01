@@ -33,7 +33,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # ==========================================================================
 
 DATA_DIR = "data"
-CHROMA_DB_DIR = "Chroma_Db"
+CHROMA_DB_DIR = "chroma_db"
 
 # Chunking controls how much text goes into each searchable piece.
 CHUNK_SIZE = 1000

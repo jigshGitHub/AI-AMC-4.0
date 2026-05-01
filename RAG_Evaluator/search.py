@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from models import SearchMetrics, SearchResult
+from RAG_Evaluator.models import SearchMetrics, SearchResult
 
 
 class SearchEvaluator:

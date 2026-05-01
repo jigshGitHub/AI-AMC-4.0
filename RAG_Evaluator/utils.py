@@ -8,7 +8,7 @@ from typing import Iterable
 
 import numpy as np
 
-from models import RAGEvaluationReport
+from RAG_Evaluator.models import RAGEvaluationReport
 
 
 def tokenize(text: str) -> list[str]:

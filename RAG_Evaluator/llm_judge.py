@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from models import LLMJudgeMetrics
+from RAG_Evaluator.models import LLMJudgeMetrics
 
 
 GROUNDING_PROMPT_TEMPLATE = """You are an evaluation judge. Given the following answer and a source document,
