@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from datetime import UTC, datetime
 
-from answer import AnswerEvaluator
-from models import AnswerEvalInput,RAGEvaluationReport,RetrievedDocument,SearchResult,SearchMetrics
-from llm_judge import LLMJudge
-from search import SearchEvaluator
-from utils import format_report
+from RAG_Evaluator.answer import AnswerEvaluator
+from RAG_Evaluator.models import AnswerEvalInput,RAGEvaluationReport,RetrievedDocument,SearchResult,SearchMetrics
+from RAG_Evaluator.llm_judge import LLMJudge
+from RAG_Evaluator.search import SearchEvaluator
+from RAG_Evaluator.utils import format_report
 
 
 def main() -> None:
