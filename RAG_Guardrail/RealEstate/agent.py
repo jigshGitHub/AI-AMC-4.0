@@ -638,7 +638,7 @@ def detailed_answer(state: RealEstateState) -> dict:
     response = llm.invoke(
         f"You are a helpful real estate agent.\n"
         f"Answer the user's question using only the information below.\n\n"
-        f"User question:\n{state.user_question}\n\n"
+        f"User question:\n{state.sanitized_input}\n\n"
         f"Question analysis:\n{state.question_analysis}\n\n"
         f"MARKET TREND:\n{state.market_analysis}\n\n"
         f"PROPERTY INSIGHTS:\n{state.property_insights}\n\n"
@@ -662,7 +662,7 @@ def quick_answer(state: RealEstateState) -> dict:
     response = llm.invoke(
         f"You are a helpful real estate agent.\n"
         f"Answer the user's question using only the information below.\n\n"
-        f"User question:\n{state.user_question}\n\n"
+        f"User question:\n{state.sanitized_input}\n\n"
         f"MARKET TREND:\n{state.market_analysis}\n\n"
         f"PROPERTY INSIGHTS:\n{state.property_insights}\n\n"
         f"INVESTMENT STRATEGY:\n{state.investment_strategy}\n\n"
@@ -693,7 +693,7 @@ def pick_response_mode(state: RealEstateState) -> dict:
     """
     response = llm.invoke(
         f"You are a response planner for a real estate RAG assistant.\n\n"
-        f"User question:\n{state.user_question}\n\n"
+        f"User question:\n{state.sanitized_input}\n\n"
         f"Question analysis:\n{state.question_analysis}\n\n"
         f"MARKET TREND:\n{state.market_analysis}\n\n"
         f"PROPERTY INSIGHTS:\n{state.property_insights}\n\n"
@@ -753,7 +753,7 @@ def investment_strategy_specialist(state: RealEstateState) -> dict:
     '''Parallel node: ask the investment strategy specialist to analyze the retrieved context and answer the user's question.'''
     response = llm.invoke(
         f"You are a real estate investment strategy specialist who can analyze residential, commercial, and industrial properties. \n\n"
-        f"The user asked: '{state.user_question}'.\n\n"
+        f"The user asked: '{state.sanitized_input}'.\n\n"
         f"Using only the retrieved context:\n{state.retrieved_context}\n\n"
         f"Provide a summary of investment strategy insights and respond to the user's question in clear language."
     )
@@ -767,7 +767,7 @@ def property_insights_specialist(state: RealEstateState) -> dict:
     '''Parallel node: ask the property insights specialist to analyze the retrieved context and answer the user's question.'''
     response = llm.invoke(
         f"You are a real estate property specialist who can analyze residential, commercial, and industrial properties. \n\n"
-        f"The user asked: '{state.user_question}'.\n\n"
+        f"The user asked: '{state.sanitized_input}'.\n\n"
         f"Using only the retrieved context:\n{state.retrieved_context}\n\n"
         f"Provide a summary of property insights and respond to the user's question in clear language."
     )
@@ -781,7 +781,7 @@ def market_specialist(state: RealEstateState) -> dict:
     '''Parallel node: ask the market specialist to analyze the retrieved context and answer the user's question.'''
     response = llm.invoke(
         f"You are a real estate market analyst with the speciality of analyzing real estate trends, insights, current market conditions etc.\n"
-        f"The user asked: '{state.user_question}'.\n\n"
+        f"The user asked: '{state.sanitized_input}'.\n\n"
         f"Using only the retrieved context:\n{state.retrieved_context}\n\n"
         f"Provide a summary of market analysis and respond to the user's question in clear language."
     )
@@ -835,7 +835,7 @@ def search_index(state: RealEstateState) -> dict:
     This is the key node you wanted to show your students explicitly.
     """
     vector_store = load_vector_store()
-    retrieved_documents = vector_store.similarity_search(state.user_question, k=config.TOP_K)
+    retrieved_documents = vector_store.similarity_search(state.sanitized_input, k=config.TOP_K)
 
     retrieved_context = format_context(retrieved_documents)
     retrieved_sources = format_sources(retrieved_documents)
@@ -854,7 +854,7 @@ def understand_question(state: RealEstateState) -> dict:
     """
     response = llm.invoke(
         f"You are a helpful real estate assistant who has knowledge of current real estate trends, real estate investments etc.\n"
-        f"The user asked: '{state.user_question}'.\n\n"
+        f"The user asked: '{state.sanitized_input}'.\n\n"
         f"In 2-3 short sentences, analyze and explain what the user is expecting as an answer of the query/question submitted.\n"
         f"Mention whether the question is mainly about real estate investment prospective or need some guidance about current trends "
         f"in real estate markets or user is mainly looking for some guide line as a buyer or seller any properties."
@@ -963,7 +963,7 @@ def build_real_estate_agent():
     graph.add_edge("deliver_response", END)
     return graph.compile()
 
-def query_rag(question: str) -> dict:
+def query_rag(question: str, reference_answer: str = "") -> dict:
     """Run one user question through the real estate LangGraph agent.
 
     Returns a dict with keys:
@@ -971,7 +971,7 @@ def query_rag(question: str) -> dict:
     - retrieved_sources: str (optional)
     """
     app = build_real_estate_agent()
-    result = app.invoke({"user_question": question, "messages": []})
+    result = app.invoke({"user_question": question,"reference_answer": reference_answer, "messages": []})
     return {
         "final_answer": result.get("final_answer", ""),
         "retrieved_sources": result.get("retrieved_sources", ""),
