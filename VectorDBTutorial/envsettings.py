@@ -15,8 +15,11 @@ def getEmbeddingModel():
 def getChromaDBDir():
     return os.getenv("CHROMA_DB_DIR", "./chroma_db")
 
+def get_LLM_MODEL():
+    return os.getenv("LLM_MODEL", "gpt-3.5-turbo")
 envsettings : Set[Callable[..., Any]] = {
      getOpenAIClient,
      getEmbeddingModel,
      getChromaDBDir,
+     get_LLM_MODEL
 }

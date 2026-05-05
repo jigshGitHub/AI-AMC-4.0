@@ -1,3 +1,15 @@
+# ============================================================
+#  SCRIPT 01 — What Is an Embedding?
+#
+#  This script answers the question:
+#    "What does it actually mean to turn text into a vector?"
+#
+#  You will see:
+#    - The raw numbers that represent a sentence
+#    - How many dimensions OpenAI's model produces
+#    - That similar sentences produce similar vectors
+#    - Cosine similarity computed by hand
+# ============================================================
 import os
 import sys
 import math

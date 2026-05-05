@@ -1,3 +1,12 @@
+# ============================================================
+#  SCRIPT 02 — Storing Documents in a Vector Database
+#
+#  This script shows:
+#    - How to embed multiple documents with OpenAI
+#    - How to attach metadata to each document
+#    - How ChromaDB stores: ID + vector + metadata + text
+#    - Progress feedback so the class can see it working
+# ============================================================
 import os
 import sys
 import time
