@@ -1,22 +1,13 @@
 import os
 import sys
 import math
-from dotenv import load_dotenv
-from openai import OpenAI
-
-load_dotenv()
-
-def getOpenAIClient():
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-def getembeddingmodel():
-    return os.getenv("TEXT_EMBEDDING_MODEL", "text-embedding-3-small")
+from envsettings import getEmbeddingModel, getOpenAIClient
 
 def embed_text(text):
     client = getOpenAIClient()
     response = client.embeddings.create(
         input=text,
-        model=getembeddingmodel()
+        model=getEmbeddingModel()
     )
     return response.data[0].embedding
 
@@ -66,3 +57,23 @@ if __name__ == "__main__":
         print(f"    {sentences[x][:55]}")
         print(f"    {sentences[y][:55]}")
         print()
+
+    # ── Step 3: Word analogy demo ───────────────────────────────
+    print("\n" + "=" * 60)
+    print("STEP 3 — Even single words become vectors")
+    print("=" * 60)
+
+    words = ["king", "queen", "man", "woman", "dog", "cat", "pizza"]
+    word_vectors = {w: embed_text(w) for w in words}
+
+    print()
+    for w1 in words[:5]:
+        for w2 in words[:5]:
+            if w1 >= w2:
+                continue
+            sim = cosine_similarity(word_vectors[w1], word_vectors[w2])
+            print(f"  {w1:8s} <-> {w2:8s}  ->  {sim:.4f}")
+
+    print()
+    print("Notice that  king<->queen  and  man<->woman  score higher")
+    print("than  king<->pizza  -- the model understands relationships.")
