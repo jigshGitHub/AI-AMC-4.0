@@ -56,8 +56,12 @@ def run_chat_loop() -> None:
             return
 
         answer = query_rag(question)
+        # print()
+        # print(f"Assistant: {answer}")
+        # print()
+        # print("-" * 60)
         print()
-        print(f"Assistant: {answer['final_answer']}")
+        print(f"Assistant: {answer['final_response']}")
         print()
         print("-" * 60)
         print("Sources:")

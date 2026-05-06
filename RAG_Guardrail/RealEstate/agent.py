@@ -114,7 +114,7 @@ class RealEstateState(BaseModel):
     nlp_output_passed: bool = True
     nlp_output_reason: str = ""
     # ---- final output ----
-    final_answer: str = ""
+    final_response: str = ""
     blocked_message: str = ""
     evaluation_report: dict = {}
     evaluation_summary: str = ""
@@ -555,17 +555,17 @@ def blocked_response(state: RealEstateState) -> dict:
     }
 
 def nlp_blocked_response(state: RealEstateState) -> dict:
-    print(f"  [BLOCKED] {state.blocked_message}")
+    print(f"  [NLP_BLOCKED] {state.blocked_message}")
     return {
         "final_response": (
             f"Your request could not be processed.\n"
             f"{'='*50}\n"
             f"Reason: {state.blocked_message}\n\n"
-            f"Agent cannot provide that specific information as it may "
-            f"conflict with Fair Housing compliance guidelines. However, the agent can "
+            f"Agent cannot provide that specific information as it may conflict with Fair Housing compliance guidelines. However, the agent can "
+            f"I'm sorry, but as an AI assistant developed to respect and adhere to fair housing laws, I can't provide assistance based on race, religion, sex, color, disability, national origin, familial status, gender identity, and sexual orientation"
             f"provide factual property data like square footage or amenities."
         ),
-        "messages": ["[blocked_response] Blocked message delivered"],
+        "messages": ["[nlp_blocked_response] NLP Blocked message delivered"],
     }
 
 def deliver_response(state: RealEstateState) -> dict:
@@ -653,7 +653,7 @@ def detailed_answer(state: RealEstateState) -> dict:
     )
 
     return {
-        "final_answer": response.content,
+        "final_response": response.content,
         "messages": ["[detailed_answer] Generated detailed answer"],
     }
 
@@ -673,7 +673,7 @@ def quick_answer(state: RealEstateState) -> dict:
     )
 
     return {
-        "final_answer": response.content,
+        "final_response": response.content,
         "messages": ["[quick_answer] Generated quick answer"],
     }
 
@@ -858,6 +858,8 @@ def understand_question(state: RealEstateState) -> dict:
         f"In 2-3 short sentences, analyze and explain what the user is expecting as an answer of the query/question submitted.\n"
         f"Mention whether the question is mainly about real estate investment prospective or need some guidance about current trends "
         f"in real estate markets or user is mainly looking for some guide line as a buyer or seller any properties."
+        f"You should politely refuse to provide information for queries that include references to protected classes like race, religion, "
+        f"sex, color, disability, national origin, familial status, gender identity, and sexual orientation due to fair housing regulations."
     )
 
     return {
@@ -917,7 +919,7 @@ def build_real_estate_agent():
     graph.add_conditional_edges(
         "nlp_input_guard",
         route_after_nlp_input,
-        {"continue": "understand_question", "block": "blocked_response"},
+        {"continue": "understand_question", "block": "nlp_blocked_response"},
     )
 
     # RAG edge: question understanding -> retrieval (fan-out → fan-in)
@@ -953,7 +955,7 @@ def build_real_estate_agent():
     graph.add_conditional_edges(
         "nlp_output_guard",
         route_after_nlp_output,
-        {"continue": "evaluate_response", "block": "nlp_blocked_response"},
+        {"continue": "evaluate_response", "block": "blocked_response"},
     )
     graph.add_edge("evaluate_response", "deliver_response")
 
@@ -967,13 +969,24 @@ def query_rag(question: str, reference_answer: str = "") -> dict:
     """Run one user question through the real estate LangGraph agent.
 
     Returns a dict with keys:
-    - final_answer: str
+    - final_response: str
     - retrieved_sources: str (optional)
     """
     app = build_real_estate_agent()
     result = app.invoke({"user_question": question,"reference_answer": reference_answer, "messages": []})
+    # print("\n" + "=" * 60)
+    # print("  FINAL RESULT")
+    # print("=" * 60)
+    # print(f"\n{result['final_response']}")
+
+    print("\n" + "-" * 60)
+    print("  GUARDRAIL AUDIT TRAIL")
+    print("-" * 60)
+    for msg in result["messages"]:
+        print(f"  {msg}")
+
     return {
-        "final_answer": result.get("final_answer", ""),
+        "final_response": result.get("final_response", ""),
         "retrieved_sources": result.get("retrieved_sources", ""),
     }
 
@@ -1000,11 +1013,11 @@ if __name__ == "__main__":
                 print(f"\nScenario: {label}")
                 print(f"User query: {query}")
                 answer = query_rag(query)
-                print(f"Agent answer:\n{answer['final_answer']}")
+                print(f"Agent answer:\n{answer['final_response']}")
                 print("\n" + "-" * 60)
             print(f"\n{'#'*60}")
             print(f"# DEMO COMPLETE -- {len(guardrail_scenarios)} scenarios tested")
             print(f"{'#'*60}\n")
         elif user_input in {"c", "continue"}:
             answer = query_rag("Tell me how is the real estate market in 2026.")
-            print(answer['final_answer'])
+            print(answer['final_response'])
