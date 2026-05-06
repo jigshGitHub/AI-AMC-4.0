@@ -1,7 +1,8 @@
 """
 This resume evaluator agent uses two tools first it scans resume contents and then makes the analysis.
-Look for the counter logic to scan how many files int the folder.
-It uses OpenAI endpoints 
+Look for the counter logic (syntax "if counter >") to scan how many files into the folder.
+On the input prompt type C or c to use the sample JD provided in the code. You can also paste your own JD to evaluate the resumes against that.
+It uses OpenAI endpoints
 """
 
 import os
@@ -92,9 +93,6 @@ def analyze_resume_contents(extracted_content: str, job_description: str) -> str
         extracted_content: Extracted contents of resume.
         job_description: Job description to evalate against the resume contents.
     """
-
-    # logger.info(f"[Tool: extract_resume_contents] Received JD: '{job_description}'")
-
     analyze_prompt = PromptTemplate(
         input_variables=["extracted_content", "job_description"],
         template="""You are a Human resource specialist for recruiting candidates in your company.
@@ -123,14 +121,6 @@ def create_resume_evaluation_agent(job_description: str):
                 Constraint:Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
                 Finally, you MUST provide your answer in the specified structured JSON format.
                 """
-                # Output format:
-                # Candidate Name: Full name of the candidate and other contact details if any
-                # Match Score: A percentage (0-100%) based on how well the candidate meets the "Must-Have" requirements.
-                # Executive Summary: A 3-sentence overview of the candidate’s profile relative to this job.
-                # Strengths: Bullet points of where the candidate exceeds or perfectly hits JD requirements.
-                # Gaps: Specific required skills or experiences that are missing or under-represented.
-                # Interview Verdict: A "Yes," "Neutral," or "No" recommendation with a one-sentence justification.
-                # """
 
     agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False,response_format=ResumeEvaluation)
     return  agent_graph
@@ -178,7 +168,7 @@ def evaluate_resumes(folder_path, job_description):
                 #logger.info(summarized_contents)
 
                 counter += 1
-                if counter > 3:
+                if counter > 3: # Adjust this threshold as needed to process more or fewer files in the folder
                     break  # Remove this break to process all files in the folder
             except Exception as e:
                 logger.error(f"Could not read file {filename}: {e}")

@@ -1,7 +1,8 @@
 """
 This resume evaluator agent does not use any tool but with just simple prmpt it analyze the resume.
-Look for the counter logic to scan how many files int the folder.
-It uses OpenAI endpoints 
+Look for the counter logic (syntax "if counter >") to scan how many files into the folder.
+On the input prompt type C or c to use the sample JD provided in the code. You can also paste your own JD to evaluate the resumes against that.
+It uses OpenAI endpoints
 """
 import os
 import pdfplumber
@@ -51,7 +52,7 @@ Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
 
 def create_resume_evaluation_agent():
     llm = ChatOpenAI(model=os.getenv("LLM_MODEL"), temperature=0)
-    
+
     # We use a structured output LLM directly
     structured_llm = llm.with_structured_output(ResumeEvaluation)
     return structured_llm
@@ -82,20 +83,20 @@ def evaluate_resumes(folder_path, job_description):
             # Direct invocation for structured extraction
             prompt = f"""
             You are an expert recruiter. Compare the Resume below against the Job Description.
-            
+
             JOB DESCRIPTION:
             {job_description}
-            
+
             RESUME:
             {file_contents}
             """
-            
+
             evaluation = evaluator.invoke(prompt)
             output_summary.append(evaluation)
             logger.info(f"Evaluated {filename}")
 
             counter += 1
-            if counter > 2:
+            if counter > 3:
                 break
 
         except Exception as e:
@@ -121,7 +122,7 @@ def evaluate_resumes(folder_path, job_description):
 if __name__ == "__main__":
     os.system('cls' if os.name=='nt' else 'clear')
     while True:
-        job_description = input("Paste your job description, to continue with sample JD, just type C or C :").strip()        
+        job_description = input("Paste your job description, to continue with sample JD, just type C or C :").strip()
 
         if not job_description:
             logger.error("The contents of the job description are required to move forward\n")
