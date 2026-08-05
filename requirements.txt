@@ -39,8 +39,8 @@ streamlit>=1.35.0
 tqdm==4.67.1                  # Progress bars
 colorama==0.4.6               # Colored terminal output
 
-# python-docx
-# pdfplumber
+python-docx
+pdfplumber
 
 # Configuration Management
 pyyaml==6.0.2

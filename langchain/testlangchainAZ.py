@@ -19,7 +19,7 @@ load_dotenv()
 llm = AzureAIOpenAIApiChatModel(
 	project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT"),
 	credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
-	model = os.getenv("LLM_MODEL"),
+	model = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
 )
 
 parser = PydanticOutputParser(pydantic_object=Celebrity)
@@ -35,19 +35,19 @@ structured_llm = llm.with_structured_output(Celebrity)
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-    
+
     # 4. Chain the components
     chain = prompt | llm | parser
-    
+
     try:
         query = "Who is AB in bollywood?"
         response = chain.invoke({"query": query})
-        
+
         print("--- CLEAN STRUCTURED OUTPUT ---")
         print(f"Name: {response.full_details}")
         print(f"Known For: {response.known_for}")
         print(f"Summary: {response.executive_summary}")
-        
+
     except Exception as e:
         print(f"Error: {e}")
 
