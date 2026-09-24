@@ -62,6 +62,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain.agents import create_agent
+from azure.identity import DefaultAzureCredential
+from langchain_azure_ai.chat_models import AzureAIOpenAIApiChatModel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,24 +76,37 @@ logger.info("Starting Email Humanizer Agent...")
 
 load_dotenv()
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key or api_key.startswith("sk-your"):
-    logger.error("OPENAI_API_KEY not set! Copy .env.example to .env and add your key.")
-    sys.exit(1)
-
-logger.info("API key loaded successfully")
-logger.info("All LangChain components imported")
-logger.info("Initializing the LLM (OpenAI GPT)...")
-
-llm = ChatOpenAI(
-    model="gpt-4.1-mini",
-    temperature=0.7,
-    verbose=True,
-)
-
-logger.info("LLM initialized: model=gpt-4.1-mini, temperature=0.7")
-logger.info("Defining agent tools...")
-
+env_type = os.getenv("ENVTYPE")
+if env_type == "azure":
+    logger.info("Initializing the LLM (AzureAIOpenAI)...")
+    if os.getenv("AZURE_CREDENTIAL") == 'default':
+        llm = AzureAIOpenAIApiChatModel(
+            project_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
+            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+            temperature=0.7,
+            verbose=True,
+        )
+    else:
+        # key credential
+        llm = AzureAIOpenAIApiChatModel(
+            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            credential=os.getenv("AZURE_OPENAI_API_KEY"),
+            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+            temperature=0.7,
+            verbose=True,
+        )
+else:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key.startswith("sk-your"):
+        logger.error("OPENAI_API_KEY not set! Copy .env.example to .env and add your key.")
+        sys.exit(1)
+    logger.info("Initializing the LLM (OpenAI GPT)...")
+    llm = ChatOpenAI(
+        model=os.getenv("LLM_MODEL"),
+        temperature=0.7,
+        verbose=True,
+    )
 
 @tool
 def draft_email(idea: str) -> str:
@@ -106,17 +121,17 @@ def draft_email(idea: str) -> str:
     draft_prompt = PromptTemplate(
         input_variables=["idea"],
         template="""You are a professional email writer.
-Given the following idea, write a structured email draft.
+        Given the following idea, write a structured email draft.
 
-Idea: {idea}
+        Idea: {idea}
 
-Write the email with:
-- A clear subject line
-- Professional greeting
-- Well-organized body (2-3 short paragraphs)
-- Professional closing
+        Write the email with:
+        - A clear subject line
+        - Professional greeting
+        - Well-organized body (2-3 short paragraphs)
+        - Professional closing
 
-Return ONLY the email, nothing else.""",
+        Return ONLY the email, nothing else.""",
     )
 
     formatted_prompt = draft_prompt.format(idea=idea)
@@ -126,7 +141,6 @@ Return ONLY the email, nothing else.""",
 
     logger.info("[Tool: draft_email] Draft created successfully!")
     return response.content
-
 
 @tool
 def humanize_email(draft: str) -> str:
@@ -142,22 +156,21 @@ def humanize_email(draft: str) -> str:
     humanize_prompt = PromptTemplate(
         input_variables=["draft"],
         template="""You are an expert at making emails sound human and natural.
+        Take this email draft and rewrite it to sound like a real person wrote it.
 
-Take this email draft and rewrite it to sound like a real person wrote it.
+        Rules:
+        - Use contractions (I'm, we're, don't, can't)
+        - Vary sentence length (mix short and long sentences)
+        - Add a touch of warmth and personality
+        - Remove corporate jargon and stiff phrases
+        - Keep it professional but approachable
+        - Keep the same core message and structure
+        - Make it sound like something you'd actually send to a colleague
 
-Rules:
-- Use contractions (I'm, we're, don't, can't)
-- Vary sentence length (mix short and long sentences)
-- Add a touch of warmth and personality
-- Remove corporate jargon and stiff phrases
-- Keep it professional but approachable
-- Keep the same core message and structure
-- Make it sound like something you'd actually send to a colleague
+        Email draft:
+        {draft}
 
-Email draft:
-{draft}
-
-Return ONLY the humanized email, nothing else.""",
+        Return ONLY the humanized email, nothing else.""",
     )
 
     formatted_prompt = humanize_prompt.format(draft=draft)
@@ -168,32 +181,7 @@ Return ONLY the humanized email, nothing else.""",
     logger.info("[Tool: humanize_email] Email humanized successfully!")
     return response.content
 
-
-tools = [draft_email, humanize_email]
-logger.info(f"Tools registered: {[t.name for t in tools]}")
-logger.info("Creating the agent...")
-
-SYSTEM_PROMPT = """You are an Email Humanizer assistant. Your job is to help users
-write natural, human-sounding emails.
-
-When the user gives you an email idea, follow these steps:
-1. First, use the draft_email tool to create a structured email draft.
-2. Then, use the humanize_email tool to make the draft sound natural and warm.
-3. Return the final humanized email to the user.
-
-Always use both tools in order: draft first, then humanize."""
-
-agent_graph = create_agent(
-    model=llm,
-    tools=tools,
-    system_prompt=SYSTEM_PROMPT,
-    debug=True,
-)
-
-logger.info("Agent created and ready to run!")
-
-
-def run_email_humanizer(email_idea: str) -> str:
+def run_email_humanizer(email_idea: str, agent_graph) -> str:
     """
     Main function to run the email humanizer agent.
 
@@ -222,6 +210,31 @@ def run_email_humanizer(email_idea: str) -> str:
 
     return final_email
 
+def setup_agent():
+
+    logger.info("Defining agent tools...")
+
+    tools = [draft_email, humanize_email]
+    logger.info(f"Tools registered: {[t.name for t in tools]}")
+
+    SYSTEM_PROMPT = """You are an Email Humanizer assistant. Your job is to help users
+    write natural, human-sounding emails.
+
+    When the user gives you an email idea, follow these steps:
+    1. First, use the draft_email tool to create a structured email draft.
+    2. Then, use the humanize_email tool to make the draft sound natural and warm.
+    3. Return the final humanized email to the user.
+
+    Always use both tools in order: draft first, then humanize."""
+
+    logger.info("Creating the agent...")
+
+    return create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=SYSTEM_PROMPT,
+        # debug=True,
+    )
 
 if __name__ == "__main__":
     print("\n" + "=" * 60)
@@ -244,7 +257,8 @@ if __name__ == "__main__":
             break
 
         try:
-            humanized_email = run_email_humanizer(email_idea)
+            agent_graph = setup_agent();
+            humanized_email = run_email_humanizer(email_idea,agent_graph)
 
             print("\n" + "=" * 60)
             print("YOUR HUMANIZED EMAIL:")
