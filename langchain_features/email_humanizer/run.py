@@ -1,3 +1,5 @@
+
+# Run like this python -m langchain_features.email_humanizer.run in root folder
 """
 ===========================================================================
  EMAIL HUMANIZER -- A Beginner's LangChain Single-Agent Project
@@ -57,13 +59,11 @@ import sys
 import os
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
-from langchain.agents import create_agent
-from azure.identity import DefaultAzureCredential
-from langchain_azure_ai.chat_models import AzureAIOpenAIApiChatModel
+
+from cofiguration.llm_provider import get_agent,get_llm
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,37 +76,7 @@ logger.info("Starting Email Humanizer Agent...")
 
 load_dotenv()
 
-env_type = os.getenv("ENVTYPE")
-if env_type == "azure":
-    logger.info("Initializing the LLM (AzureAIOpenAI)...")
-    if os.getenv("AZURE_CREDENTIAL") == 'default':
-        llm = AzureAIOpenAIApiChatModel(
-            project_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
-            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-            temperature=0.7,
-            verbose=True,
-        )
-    else:
-        # key credential
-        llm = AzureAIOpenAIApiChatModel(
-            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            credential=os.getenv("AZURE_OPENAI_API_KEY"),
-            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-            temperature=0.7,
-            verbose=True,
-        )
-else:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key or api_key.startswith("sk-your"):
-        logger.error("OPENAI_API_KEY not set! Copy .env.example to .env and add your key.")
-        sys.exit(1)
-    logger.info("Initializing the LLM (OpenAI GPT)...")
-    llm = ChatOpenAI(
-        model=os.getenv("LLM_MODEL"),
-        temperature=0.7,
-        verbose=True,
-    )
+llm= get_llm()
 
 @tool
 def draft_email(idea: str) -> str:
@@ -229,12 +199,7 @@ def setup_agent():
 
     logger.info("Creating the agent...")
 
-    return create_agent(
-        model=llm,
-        tools=tools,
-        system_prompt=SYSTEM_PROMPT,
-        # debug=True,
-    )
+    return get_agent(tools=tools,system_prompt=SYSTEM_PROMPT)
 
 if __name__ == "__main__":
     print("\n" + "=" * 60)
