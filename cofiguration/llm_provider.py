@@ -39,7 +39,7 @@ def get_llm():
         )
 
     return llm
-def get_agent(tools=None, system_prompt=None):
+def get_agent(tools=None, system_prompt=None,debug=False,response_format=None):
     """
     Creates and returns an agent using the configured LLM.
 
@@ -58,6 +58,7 @@ def get_agent(tools=None, system_prompt=None):
         model=llm,
         tools=tools or [],
         system_prompt=system_prompt or "You are a helpful assistant.",
-        # debug=True,
+        debug=debug,
+        response_format=response_format
     )
 

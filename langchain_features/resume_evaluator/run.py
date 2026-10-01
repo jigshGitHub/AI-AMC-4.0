@@ -1,3 +1,4 @@
+# RUN Like this in Root folder: python -m langchain_features.resume_evaluator.run
 """
 This resume evaluator agent uses two tools first it scans resume contents and then makes the analysis.
 Look for the counter logic (syntax "if counter >") to scan how many files into the folder.
@@ -6,29 +7,21 @@ It uses OpenAI endpoints
 """
 
 import os
-import sys
 import pdfplumber
 import docx
-import tempfile
-import applogging
+import cofiguration.applogging as applogging
+from cofiguration.llm_provider import get_agent,get_llm
 
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
-from langchain.agents import create_agent
 from typing import List
 from pydantic import BaseModel, Field
 
 load_dotenv()
-llm_model = os.getenv("LLM_MODEL")
-llm = ChatOpenAI(
-    model=llm_model,
-    temperature=0.7,
-    verbose=True,
-)
+llm= get_llm()
 class ResumeEvaluation(BaseModel):
     """Schema for the structured resume evaluation output."""
     candidate_details: str = Field(description="Full name and contact details of the candidate")
@@ -38,7 +31,6 @@ class ResumeEvaluation(BaseModel):
     gaps: List[str] = Field(description="Missing skills or under-represented experience")
     recommendations: List[str] = Field(description="Actionable advice to improve the resume for this role")
     interview_verdict: str = Field(description="'Yes', 'Neutral', or 'No' with a 1-sentence justification")
-
 
 sample_jd = """
 Conceives, designs, and tests logical structure to meet program requirements. Writes programs according to specifications provided. Builds, deploys and maintains programs, Web Site pages and applications. Develops and improves site navigation and applications. Responsible for the design, development, and configuration of software systems to meet market and/or client requirements. Updates, repairs, modifies, and expands existing computer programs. Writes, tests, and maintains computer programs. Develops code using Java, C#, HTML, Javascript, or other programming languages.
@@ -114,15 +106,17 @@ def create_resume_evaluation_agent(job_description: str):
     SYSTEM_PROMPT ="""
                 You are an expert recruiter. Your task is to extract resume contents and then evaluate its alignment with a
                 provided Job Description (JD). You must provide a structured, objective summary that highlights the candidate's fitness
-                for the specific role priovided in job description.
+                for the specific role provided in job description.
                 Job Description: {job_description}
                 First use extract_resume_contents then analyze_resume_contents to synthesize the extracted information into a concise evaluation
                 of the candidate's suitability for the job description provided.
-                Constraint:Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles. If the JD requires "Python" and it isn't listed, mark it as a gap.
+                Constraint:Stay strictly objective. Do not infer skills that are not explicitly stated or strongly implied by professional titles.
+                If the JD requires "Python" and it isn't listed, mark it as a gap.
                 Finally, you MUST provide your answer in the specified structured JSON format.
                 """
 
-    agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False,response_format=ResumeEvaluation)
+    # agent_graph = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT, debug=False,response_format=ResumeEvaluation)
+    agent_graph = get_agent(tools=tools, system_prompt=SYSTEM_PROMPT, debug=False,response_format=ResumeEvaluation);
     return  agent_graph
 
 def evaluate_resumes(folder_path, job_description):
@@ -168,7 +162,7 @@ def evaluate_resumes(folder_path, job_description):
                 #logger.info(summarized_contents)
 
                 counter += 1
-                if counter > 3: # Adjust this threshold as needed to process more or fewer files in the folder
+                if counter > 0: # Adjust this threshold as needed to process more or fewer files in the folder, # Change here, if you want to evaluate more than one resume
                     break  # Remove this break to process all files in the folder
             except Exception as e:
                 logger.error(f"Could not read file {filename}: {e}")

@@ -7,14 +7,11 @@ It uses OpenAI endpoints
 import os
 import pdfplumber
 import docx
-import applogging
+import cofiguration.applogging as applogging
+from cofiguration.llm_provider import get_agent,get_llm
 from typing import List
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
-from langgraph.prebuilt import create_react_agent
 
 load_dotenv()
 logger = applogging.get_logger("resume_app")
@@ -51,8 +48,7 @@ Ability to report to the client site in Annapolis Junction, MD (up to 3x a week)
 """
 
 def create_resume_evaluation_agent():
-    llm = ChatOpenAI(model=os.getenv("LLM_MODEL"), temperature=0)
-
+    llm = get_llm()
     # We use a structured output LLM directly
     structured_llm = llm.with_structured_output(ResumeEvaluation)
     return structured_llm
@@ -96,7 +92,7 @@ def evaluate_resumes(folder_path, job_description):
             logger.info(f"Evaluated {filename}")
 
             counter += 1
-            if counter > 3:
+            if counter > 0: # Change here, if you want to evaluate more than one resume
                 break
 
         except Exception as e:
