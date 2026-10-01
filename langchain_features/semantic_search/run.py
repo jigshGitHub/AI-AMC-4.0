@@ -1,10 +1,12 @@
 import os
 from typing import Iterable
-from langchain_community.document_loaders import PyPDFLoader
+#from langchain_community.document_loaders import PyPDFLoader
+
+import pdfplumber
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 
 DATA_DIR = "data"
 CHROMA_DB_DIR = "chroma_db"
@@ -37,9 +39,26 @@ def get_pdf_paths(data_dir: str) -> list[str]:
     )
     return [os.path.join(data_dir, filename) for filename in pdf_filenames]
 
+# def load_pdf_documents(pdf_paths: Iterable[str]) -> list[Document]:
+#     """
+#     Load every PDF page as a LangChain Document.
+
+#     Each page becomes one Document with:
+#     - page_content: extracted text
+#     - metadata: source file path and page number
+#     """
+#     documents: list[Document] = []
+
+#     for pdf_path in pdf_paths:
+#         pdf_name = os.path.basename(pdf_path)
+#         print(f"Loading PDF: {pdf_name}")
+#         loader = PyPDFLoader(pdf_path) # Loads one document for each PDF page, with metadata for source and page number
+#         documents.extend(loader.load())
+
+#     return documents
 def load_pdf_documents(pdf_paths: Iterable[str]) -> list[Document]:
     """
-    Load every PDF page as a LangChain Document.
+    Load every PDF page as a LangChain Document using pdfplumber.
 
     Each page becomes one Document with:
     - page_content: extracted text
@@ -48,10 +67,18 @@ def load_pdf_documents(pdf_paths: Iterable[str]) -> list[Document]:
     documents: list[Document] = []
 
     for pdf_path in pdf_paths:
-        pdf_name = os.path.basename(pdf_path)
-        print(f"Loading PDF: {pdf_name}")
-        loader = PyPDFLoader(pdf_path) # Loads one document for each PDF page, with metadata for source and page number
-        documents.extend(loader.load())
+        print(f"Loading PDF: {os.path.basename(pdf_path)}")
+
+        with pdfplumber.open(pdf_path) as pdf:
+            for idx, page in enumerate(pdf.pages, start=1):
+                text = page.extract_text() or ""
+
+                documents.append(
+                    Document(
+                        page_content=text,
+                        metadata={"source": pdf_path, "page": idx}
+                    )
+                )
 
     return documents
 

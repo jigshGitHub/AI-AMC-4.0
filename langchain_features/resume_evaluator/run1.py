@@ -1,3 +1,4 @@
+# RUN Like this in Root folder: python -m langchain_features.resume_evaluator.run1
 """
 This resume evaluator agent does not use any tool but with just simple prmpt it analyze the resume.
 Look for the counter logic (syntax "if counter >") to scan how many files into the folder.
