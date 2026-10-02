@@ -7,9 +7,14 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from cofiguration.langchain_framework import get_embedding_llm
+from pathlib import Path
+CURRENT_FILE = Path(__file__).resolve()
 
-DATA_DIR = "data"
-CHROMA_DB_DIR = "chroma_db"
+PARENT_DIR = CURRENT_FILE.parent
+
+DATA_DIR = PARENT_DIR / "data"
+CHROMA_DB_DIR = PARENT_DIR / "chroma_db"
 
 # Chunking controls how much text goes into each searchable piece.
 CHUNK_SIZE = 1000 # The maximum number of characters (or tokens) each chunk can contain.
@@ -39,23 +44,6 @@ def get_pdf_paths(data_dir: str) -> list[str]:
     )
     return [os.path.join(data_dir, filename) for filename in pdf_filenames]
 
-# def load_pdf_documents(pdf_paths: Iterable[str]) -> list[Document]:
-#     """
-#     Load every PDF page as a LangChain Document.
-
-#     Each page becomes one Document with:
-#     - page_content: extracted text
-#     - metadata: source file path and page number
-#     """
-#     documents: list[Document] = []
-
-#     for pdf_path in pdf_paths:
-#         pdf_name = os.path.basename(pdf_path)
-#         print(f"Loading PDF: {pdf_name}")
-#         loader = PyPDFLoader(pdf_path) # Loads one document for each PDF page, with metadata for source and page number
-#         documents.extend(loader.load())
-
-#     return documents
 def load_pdf_documents(pdf_paths: Iterable[str]) -> list[Document]:
     """
     Load every PDF page as a LangChain Document using pdfplumber.
@@ -107,7 +95,8 @@ def get_text_splitter(chunk_size: int = CHUNK_SIZE, chunk_overlap: int = CHUNK_O
 
 def get_embedding_model(model_name: str = EMBEDDING_MODEL):
     """Return an embedding model instance based on the specified model name."""
-    return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    # return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    return get_embedding_llm()
 
 def create_vector_store(chunks: list[Document], embedding_model) -> Chroma:
     """Create a Chroma vector store from the given text chunks and embedding model."""
@@ -117,26 +106,27 @@ def perform_ingetion(data_dir: str) :
 
     documents = load_source_documents(data_dir)
 
-    # for doc in documents:
-    #     print(f"- {doc.metadata['title']} (length: {len(doc.page_content)})")
-    #     print(f"-----------------------------------\n{doc.page_content[:200]}...\n")
+    if len(documents) > 0:
+        # for doc in documents:
+        #     print(f"- {doc.metadata['title']} (length: {len(doc.page_content)})")
+        #     print(f"-----------------------------------\n{doc.page_content[:200]}...\n")
 
-    text_splitter = get_text_splitter(CHUNK_SIZE, CHUNK_OVERLAP)
-    chunks = text_splitter.split_documents(documents)
+        text_splitter = get_text_splitter(CHUNK_SIZE, CHUNK_OVERLAP)
+        chunks = text_splitter.split_documents(documents)
 
-    # for i, chunk in enumerate(chunks):
-    #     print(f"Chunk {i + 1} of document '{chunk.metadata['title']}':")
-    #     print(chunk)
-    #     print("=" * 60)
+        # for i, chunk in enumerate(chunks):
+        #     print(f"Chunk {i + 1} of document '{chunk.metadata['title']}':")
+        #     print(chunk)
+        #     print("=" * 60)
 
-    embedding_model = get_embedding_model(EMBEDDING_MODEL)
-    print(f"Embedding model '{EMBEDDING_MODEL}' is ready to use for creating vector representations of the text chunks.")
+        embedding_model = get_embedding_model(EMBEDDING_MODEL)
+        # print(f"Embedding model '{EMBEDDING_MODEL}' is ready to use for creating vector representations of the text chunks.")
+        print(f"Embedding model is ready to use for creating vector representations of the text chunks.")
+        vector_store = create_vector_store(chunks, embedding_model)
+        print(f"Vector store created successfully at '{CHROMA_DB_DIR}'.")
 
-    vector_store = create_vector_store(chunks, embedding_model)
-    print(f"Vector store created successfully at '{CHROMA_DB_DIR}'.")
-
-    print()
-    print("Ingestion complete. Your documents are ready for retrieval.")
+        print()
+        print("Ingestion complete. Your documents are ready for retrieval.")
 
 if __name__ == "__main__":
     print("\n" + "=" * 60)
@@ -146,13 +136,14 @@ if __name__ == "__main__":
     print("\nThis is a simple example of how to load a PDF document and prepare it for semantic search using LangChain.\n")
     print("The PDF document is loaded and split into smaller chunks, which can then be embedded and indexed for efficient retrieval.\n")
 
-    # perform_ingetion(DATA_DIR)
+    perform_ingetion(DATA_DIR)
+
     vector_store = Chroma(
         persist_directory=CHROMA_DB_DIR,
         embedding_function=get_embedding_model(EMBEDDING_MODEL)
     )
     results = vector_store.similarity_search(
-         "How were Nike's margins impacted in 2023?", k = 3
+         "Whose resume are we talking about?", k = 3
     )
     for doc in results:
         print(f"Content: {doc.page_content[:200]}...")

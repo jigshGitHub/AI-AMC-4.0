@@ -4,6 +4,7 @@
 #   test/coverage artifacts, and Node/npm artifacts.
 # -----------------------------
 [Cc]hroma*/
+[Dd]ata*/
 *.bin
 # OS files
 .DS_Store

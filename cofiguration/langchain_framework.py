@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_azure_ai.chat_models import AzureAIOpenAIApiChatModel
+from langchain_openai import AzureOpenAIEmbeddings
 from azure.identity import DefaultAzureCredential
 from langchain.agents import create_agent
 from langchain_core.tools import tool
@@ -39,6 +40,7 @@ def get_llm():
         )
 
     return llm
+
 def get_agent(tools=None, system_prompt=None,debug=False,response_format=None):
     """
     Creates and returns an agent using the configured LLM.
@@ -62,3 +64,17 @@ def get_agent(tools=None, system_prompt=None,debug=False,response_format=None):
         response_format=response_format
     )
 
+def get_embedding_llm():
+    """Return an embedding model instance connected to Azure OpenAI."""
+
+    # Securely retrieve endpoints and keys from your environment variables
+    azure_endpoint = os.getenv("AZURE_RESOURCE_ENDPOINT")#, "https://azure.com")
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")#, "your-actual-azure-api-key")
+
+    print("Returning AzureOpenAIEmbeddings")
+    return AzureOpenAIEmbeddings(
+        azure_deployment=os.getenv("TEXT_EMBEDDING_MODEL"),      # The name of your model deployment in Azure
+        azure_endpoint=azure_endpoint,    # The base URL (LangChain automatically appends /openai/v1)
+        api_key=api_key,                  # Your project API key
+        api_version="2024-02-01"          # Standard stable Azure API version
+    )
