@@ -9,7 +9,7 @@ import os
 import pdfplumber
 import docx
 import cofiguration.applogging as applogging
-from cofiguration.llm_provider import get_agent,get_llm
+from cofiguration.langchain_framework import get_agent,get_llm
 from typing import List
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field

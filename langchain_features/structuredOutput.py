@@ -1,4 +1,4 @@
-# RUN Like this in Root folder: python -m langchain_features.testStructuredOutput
+# RUN Like this in Root folder: python -m langchain_features.structuredOutput
 # Based on this  https://docs.langchain.com/oss/python/langchain/structured-output#tool-calling-strategy
 # Look more examples in the docs: https://docs.langchain.com/oss/python/langchain/agents/agent-strategies#provider-strategy
 import os
@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from langchain.agents import create_agent
 
-from cofiguration.llm_provider import get_agent,get_llm
+from cofiguration.langchain_framework import get_agent,get_llm
 """
 response_format: Union[
         ToolStrategy[StructuredResponseT],

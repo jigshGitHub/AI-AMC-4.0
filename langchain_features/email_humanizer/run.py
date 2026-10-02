@@ -62,7 +62,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 
-from cofiguration.llm_provider import get_agent,get_llm
+from cofiguration.langchain_framework import get_agent,get_llm
 
 logging.basicConfig(
     level=logging.INFO,

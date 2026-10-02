@@ -1,7 +1,7 @@
 
-# Run like this python -m langchain_features.testlangchain in root folder
+# Run like this python -m configuration_health_check.testlangchain in root folder
 
-from cofiguration.llm_provider import get_agent
+from cofiguration.langchain_framework import get_agent
 
 if __name__ == "__main__":
     my_agent = get_agent()
