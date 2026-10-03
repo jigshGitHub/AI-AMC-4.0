@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
-
+from cofiguration.langchain_framework import get_llm
 
 sys.stdout.reconfigure(encoding="utf-8")
 load_dotenv()
@@ -23,7 +23,8 @@ class InterviewState(BaseModel):
     final_suggestion: str = ""
     messages:Annotated[list, operator.add] = []
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+# llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+llm = get_llm()
 
 def understand_candidate(state:InterviewState):
     prompt = f"""

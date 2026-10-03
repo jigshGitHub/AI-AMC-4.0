@@ -15,19 +15,23 @@ Usage:
 """
 import os
 import sys
-import config
+#import config
 import asyncio
 from pathlib import Path
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain.mcp import MCPAdapter
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import AIMessage, ToolMessage
+from cofiguration import env_settings
+from cofiguration.langchain_framework import get_agent,get_llm
+
+print(env_settings.MCP_SERVERS_DIR)
 
 PROJECT_ROOT = Path(__file__).parent.resolve()
-NOTES_SERVER = str(f"{PROJECT_ROOT}/{config.MCP_SERVERS_DIR}/notes.py")
-CALC_SERVER  = str(f"{PROJECT_ROOT}/{config.MCP_SERVERS_DIR}/calculator.py")
+NOTES_SERVER = str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/notes.py")
+CALC_SERVER  = str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/calculator.py")
 
 MCP_CONFIG = {
     "notes": {
@@ -78,7 +82,7 @@ async def run_single_query(query: str):
     """Single query mode — no HITL, no checkpointer."""
     print(f"\nQuery: {query}\n")
 
-    client = MultiServerMCPClient(MCP_CONFIG)
+    client = MCPAdapter(MCP_CONFIG)
     graph  = await build_agent(client)
 
     result = await graph.ainvoke({"messages": [{"role": "user", "content": query}]})
@@ -95,12 +99,14 @@ async def run_interactive_chat():
     print("  LangGraph + MCP Agent  |  Human-in-the-Loop enabled")
     print("=" * 60)
     print(f"\nNotes directory : {PROJECT_ROOT / 'notes'}")
-    print(f"LLM Model       : {config.LLM_MODEL}")
+    print(f"LLM Model       : {env_settings.LLM_MODEL}")
     print("\nConnecting to MCP servers...")
 
-    client      = MultiServerMCPClient(MCP_CONFIG)
-    checkpointer = MemorySaver()
-    graph       = await build_agent(client, checkpointer)
+    print(str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/notes.py"))
+
+    # client      = MCPAdapter(MCP_CONFIG)
+    # checkpointer = MemorySaver()
+    # graph       = await build_agent(client, checkpointer)
 
     print("\n" + "-" * 60)
     print("Agent ready! Type your questions below.")
@@ -237,7 +243,7 @@ async def handle_hitl_loop(graph, graph_config: dict) -> tuple[list[str], list[s
     return approved, denied
 
 
-async def build_agent(client: MultiServerMCPClient, checkpointer=None):
+async def build_agent(client: MCPAdapter, checkpointer=None):
     """
     Builds the LangGraph ReAct graph.
 
@@ -265,17 +271,27 @@ async def build_agent(client: MultiServerMCPClient, checkpointer=None):
     Format your responses clearly with markdown when appropriate.
     """
 
-    tools = await client.get_tools()
+    tools = await client.list_tools()
     print(f"\nLoaded {len(tools)} tools from MCP servers:")
     for tool in tools:
         print(f"  - {tool.name}: {tool.description[:60]}...")
 
-    model = ChatOpenAI(model=config.LLM_MODEL, temperature=config.TEMPERATURE)
+    # model = ChatOpenAI(model=env_settings.LLM_MODEL, temperature=env_settings.TEMPERATURE)
+    model = get_llm()
+    # def call_model(state: MessagesState):
+    #     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
+    #     response = model.bind_tools(tools).invoke(messages)
+    #     return {"messages": [response]}
 
     def call_model(state: MessagesState):
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
-        response = model.bind_tools(tools).invoke(messages)
-        return {"messages": [response]}
+        # response = model.bind_tools(tools).invoke(messages)
+        # return {"messages": [response]}
+        agent = get_agent(tools)
+        result = agent.invoke(
+            {"messages": messages}
+        )
+        return result["messages"][-1].content
 
     builder = StateGraph(MessagesState)
     builder.add_node("call_model", call_model)
@@ -289,14 +305,30 @@ async def build_agent(client: MultiServerMCPClient, checkpointer=None):
         interrupt_before=["tools"] if checkpointer else [],
     )
 
+async def main():
+
+    print(f"🔄 Launching local MCP Server from: {PROJECT_ROOT}...")
+
+    async with MCPAdapter(MCP_CONFIG) as adapter:
+        print("✅ MCP Connection Established successfully via Stdio!")
+
+        # 5. Retrieve all tools declared by the server
+        tools = await adapter.list_tools()
+        print(f"📦 Loaded {len(tools)} tools from server:")
+        for tool in tools:
+            print(f" - Name: '{tool.name}' | Description: {tool.description}")
+
 if __name__ == "__main__":
+
     os.system("cls" if os.name == "nt" else "clear")
-    if "--query" in sys.argv:
-        idx = sys.argv.index("--query")
-        if idx + 1 < len(sys.argv):
-            asyncio.run(run_single_query(sys.argv[idx + 1]))
-        else:
-            print('Usage: python agent.py --query "your question here"')
-    else:
-        asyncio.run(run_interactive_chat())
-    
+
+    asyncio.run(main())
+
+    # if "--query" in sys.argv:
+    #     idx = sys.argv.index("--query")
+    #     if idx + 1 < len(sys.argv):
+    #         asyncio.run(run_single_query(sys.argv[idx + 1]))
+    #     else:
+    #         print('Usage: python agent.py --query "your question here"')
+    # else:
+    #     asyncio.run(run_interactive_chat())

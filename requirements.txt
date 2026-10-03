@@ -12,9 +12,10 @@ openai
 python-dotenv
 langgraph
 pydantic
-#langchain-mcp-adapters # bridges MCP tools into LangChain/LangGrap
-#mcp[cli]>=1.2.0 # MCP SDK with CLI tools
-#httpx>=0.27.0 # Async HTTP client (required by MCP)
+langchain[mcp]
+httpx # Async HTTP client (required by MCP)
+
+
 
 #streamlit
 duckduckgo-search
