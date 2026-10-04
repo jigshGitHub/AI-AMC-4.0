@@ -246,7 +246,6 @@ async def handle_hitl_loop(graph, graph_config: dict) -> tuple[list[str], list[s
 
     return approved, denied
 
-
 async def build_agent(client: MCPAdapter, checkpointer=None):
     """
     Builds the LangGraph ReAct graph.
@@ -280,22 +279,15 @@ async def build_agent(client: MCPAdapter, checkpointer=None):
     for tool in tools:
         print(f"  - {tool.name}: {tool.description[:60]}...")
 
-    # model = ChatOpenAI(model=env_settings.LLM_MODEL, temperature=env_settings.TEMPERATURE)
-    model = get_llm()
-    # def call_model(state: MessagesState):
-    #     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
-    #     response = model.bind_tools(tools).invoke(messages)
-    #     return {"messages": [response]}
-
     async def call_model(state: MessagesState):
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
-        # response = model.bind_tools(tools).invoke(messages)
-        # return {"messages": [response]}
         agent = get_agent(tools)
         result = await agent.ainvoke(
             {"messages": messages}
         )
-        return result["messages"][-1].content
+        # return result["messages"][-1].content
+        # FIX: Return a dict containing the complete AIMessage object
+        return {"messages": [result["messages"][-1]]}
 
     builder = StateGraph(MessagesState)
     builder.add_node("call_model", call_model)
