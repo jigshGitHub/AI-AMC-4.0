@@ -17,7 +17,7 @@ Transport: stdio
 
 import math
 import sys
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 # ─── Initialize MCP Server ───────────────────────────────────────────
 mcp = FastMCP("Calculator")

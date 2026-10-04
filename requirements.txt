@@ -14,7 +14,7 @@ langgraph
 pydantic
 langchain[mcp]
 httpx # Async HTTP client (required by MCP)
-
+fastmcp
 
 
 #streamlit

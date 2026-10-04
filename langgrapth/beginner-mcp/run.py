@@ -29,21 +29,25 @@ from cofiguration.langchain_framework import get_agent,get_llm
 
 print(env_settings.MCP_SERVERS_DIR)
 
-PROJECT_ROOT = Path(__file__).parent.resolve()
-NOTES_SERVER = str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/notes.py")
-CALC_SERVER  = str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/calculator.py")
+CURRENT_FILE = Path(__file__).resolve()
+PROJECT_ROOT = CURRENT_FILE.parent
+MCP_SERVERS_DIR = PROJECT_ROOT / env_settings.MCP_SERVERS_DIR
+NOTES_SERVER = str(MCP_SERVERS_DIR / "notes.py")
+CALC_SERVER = str(MCP_SERVERS_DIR / "calculator.py")
+
 
 MCP_CONFIG = {
     "notes": {
         "command": sys.executable,
         "args": [NOTES_SERVER],
         "transport": "stdio",
-    },
-    "calculator": {
+    }
+    ,
+     "calculator": {
         "command": sys.executable,
         "args": [CALC_SERVER],
         "transport": "stdio",
-    },
+    }
 }
 
 def print_help():
@@ -104,9 +108,9 @@ async def run_interactive_chat():
 
     print(str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/notes.py"))
 
-    # client      = MCPAdapter(MCP_CONFIG)
-    # checkpointer = MemorySaver()
-    # graph       = await build_agent(client, checkpointer)
+    client      = MCPAdapter(MCP_CONFIG)
+    checkpointer = MemorySaver()
+    graph       = await build_agent(client, checkpointer)
 
     print("\n" + "-" * 60)
     print("Agent ready! Type your questions below.")
@@ -310,6 +314,7 @@ async def main():
     print(f"🔄 Launching local MCP Server from: {PROJECT_ROOT}...")
 
     async with MCPAdapter(MCP_CONFIG) as adapter:
+        print("✅ Pydantic validation passed! Connected via Stdio.")
         print("✅ MCP Connection Established successfully via Stdio!")
 
         # 5. Retrieve all tools declared by the server
@@ -322,13 +327,14 @@ if __name__ == "__main__":
 
     os.system("cls" if os.name == "nt" else "clear")
 
-    asyncio.run(main())
+    # RUN following command just to test if MCP server connection established and comment rest of other lines of code
+    # asyncio.run(main())
 
-    # if "--query" in sys.argv:
-    #     idx = sys.argv.index("--query")
-    #     if idx + 1 < len(sys.argv):
-    #         asyncio.run(run_single_query(sys.argv[idx + 1]))
-    #     else:
-    #         print('Usage: python agent.py --query "your question here"')
-    # else:
-    #     asyncio.run(run_interactive_chat())
+    if "--query" in sys.argv:
+        idx = sys.argv.index("--query")
+        if idx + 1 < len(sys.argv):
+            asyncio.run(run_single_query(sys.argv[idx + 1]))
+        else:
+            print('Usage: python agent.py --query "your question here"')
+    else:
+        asyncio.run(run_interactive_chat())
