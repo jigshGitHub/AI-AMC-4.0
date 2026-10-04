@@ -287,12 +287,12 @@ async def build_agent(client: MCPAdapter, checkpointer=None):
     #     response = model.bind_tools(tools).invoke(messages)
     #     return {"messages": [response]}
 
-    def call_model(state: MessagesState):
+    async def call_model(state: MessagesState):
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + state["messages"]
         # response = model.bind_tools(tools).invoke(messages)
         # return {"messages": [response]}
         agent = get_agent(tools)
-        result = agent.invoke(
+        result = await agent.ainvoke(
             {"messages": messages}
         )
         return result["messages"][-1].content

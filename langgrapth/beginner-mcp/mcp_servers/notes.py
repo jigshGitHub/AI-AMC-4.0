@@ -17,7 +17,7 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime
-    from fastmcp import FastMCP
+from fastmcp import FastMCP
 
 # ─── Initialize MCP Server ───────────────────────────────────────────
 mcp = FastMCP("NotesManager")
@@ -25,7 +25,7 @@ mcp = FastMCP("NotesManager")
 # ─── Configuration ────────────────────────────────────────────────────
 # Notes directory - relative to this script's location
 CURRENT_FILE = Path(__file__).resolve()
-PROJECT_ROOT = CURRENT_FILE.parent
+PROJECT_ROOT = CURRENT_FILE.parent.parent
 NOTES_DIR = PROJECT_ROOT / "data"
 
 
