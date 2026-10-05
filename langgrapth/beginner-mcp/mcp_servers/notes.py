@@ -34,7 +34,6 @@ NOTES_DIR = PROJECT_ROOT / "data"
 @mcp.tool()
 def list_notes() -> list[dict]:
     """List all available markdown notes with metadata.
-
     Returns a list of dictionaries containing:
       - filename: Name of the markdown file
       - size_bytes: File size in bytes

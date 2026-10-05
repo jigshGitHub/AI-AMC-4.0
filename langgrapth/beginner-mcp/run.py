@@ -1,4 +1,4 @@
-# run.py
+# Run like this python -m langgrapth.beginner-mcp.run
 """
 LangGraph + MCP Agent with Human-in-the-Loop (HITL)
 =============================================
@@ -105,8 +105,6 @@ async def run_interactive_chat():
     print(f"\nNotes directory : {PROJECT_ROOT / 'notes'}")
     print(f"LLM Model       : {env_settings.LLM_MODEL}")
     print("\nConnecting to MCP servers...")
-
-    print(str(f"{PROJECT_ROOT}/{env_settings.MCP_SERVERS_DIR}/notes.py"))
 
     client      = MCPAdapter(MCP_CONFIG)
     checkpointer = MemorySaver()
