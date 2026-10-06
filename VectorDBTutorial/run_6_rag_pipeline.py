@@ -14,14 +14,20 @@
 import os
 import sys
 import chromadb
-from envsettings import getEmbeddingModel, getOpenAIClient, getChromaDBDir,get_LLM_MODEL
 
+from cofiguration import env_settings
+from cofiguration.azure_framework import get_openAIClient
+from pathlib import Path
+
+CURRENT_FILE = Path(__file__).resolve()
+PARENT_DIR = CURRENT_FILE.parent
+CHROMA_DB_DIR = PARENT_DIR / env_settings.CHROMA_DB_DIR
 TOP_K = 3   # How many results to return for each query
 def embed_text(text: str) -> list[float]:
-    client = getOpenAIClient()
+    client = get_openAIClient()
     response = client.embeddings.create(
         input=text,
-        model=getEmbeddingModel()
+        model=env_settings.TEXT_EMBEDDING_MODEL
     )
     return response.data[0].embedding
 
@@ -35,10 +41,9 @@ def safe_input(prompt: str) -> str:
         return ""
 def retrieve(question: str, k: int = TOP_K) -> list[dict]:
     """Return top-k relevant chunks from the vector DB."""
-    chroma_db_dir = getChromaDBDir()
     collection_name = "EMBEDDINGS_COLLECTION"
 
-    db = chromadb.PersistentClient(path=chroma_db_dir)
+    db = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     collection = db.get_or_create_collection(name=collection_name)
 
     q_vector = embed_text(question)
@@ -62,23 +67,19 @@ def retrieve(question: str, k: int = TOP_K) -> list[dict]:
             "distance": dist,
         })
     return chunks
-
-
 def ask_without_rag(question: str) -> str:
     """Ask GPT with no extra context (baseline / potential hallucination)."""
-    client = getOpenAIClient()
+    client = get_openAIClient()
     response = client.chat.completions.create(
-        model    = get_LLM_MODEL(),
+        model    = env_settings.LLM_MODEL,
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user",   "content": question},
         ],
-        max_tokens  = 200,
+        max_completion_tokens = 200,
         temperature = 0.7,
     )
     return response.choices[0].message.content.strip()
-
-
 def ask_with_rag(question: str, chunks: list[dict]) -> str:
     """Ask GPT with retrieved context injected into the prompt."""
     context_block = "\n\n".join(
@@ -91,19 +92,17 @@ def ask_with_rag(question: str, chunks: list[dict]) -> str:
         "information, say so. Do not make things up.\n\n"
         f"CONTEXT:\n{context_block}"
     )
-    client = getOpenAIClient()
+    client = get_openAIClient()
     response = client.chat.completions.create(
-        model    = get_LLM_MODEL(),
+        model    = env_settings.LLM_MODEL,
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": question},
         ],
-        max_tokens  = 300,
+        max_completion_tokens = 200,
         temperature = 0.2,   # low temp for factual grounded answers
     )
     return response.choices[0].message.content.strip()
-
-
 # ── Full pipeline demo ───────────────────────────────────────
 def run_rag_demo(question: str) -> None:
     print("\n" + "=" * 60)
@@ -133,7 +132,7 @@ def run_rag_demo(question: str) -> None:
     answer_rag = ask_with_rag(question, chunks)
     print(f"\n  {answer_rag}")
 
-    print("\n  ┌─────────────────────────────────────────────────────┐")
+    print("\n┌─────────────────────────────────────────────────────┐")
     print("  │  WITHOUT RAG → GPT uses general training knowledge   │")
     print("  │  WITH RAG    → GPT is constrained to our documents   │")
     print("  │  RAG = more accurate, traceable, updatable answers   │")

@@ -1,4 +1,5 @@
 # ============================================================
+# Run like this python -m VectorDBTutorial.run_4_visualize_embeddings
 #  SCRIPT 04 — Visualising Embeddings in 2D
 #
 #  1536-dimensional vectors are impossible to picture directly.
@@ -17,7 +18,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from sklearn.decomposition import PCA
-from envsettings import getChromaDBDir
+from cofiguration import env_settings
+from pathlib import Path
+
+CURRENT_FILE = Path(__file__).resolve()
+PARENT_DIR = CURRENT_FILE.parent
+CHROMA_DB_DIR = PARENT_DIR / env_settings.CHROMA_DB_DIR
 
 COLORS = {
     "Space":"#4C72B0",   # blue
@@ -31,10 +37,9 @@ if __name__ == "__main__":
     if os.system("cls" if os.name == "nt" else "clear") is not None:
         pass  # Clear the console for better readability
 
-    chroma_db_dir = getChromaDBDir()
     collection_name = "EMBEDDINGS_COLLECTION"
 
-    db = chromadb.PersistentClient(path=chroma_db_dir)
+    db = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     collection = db.get_or_create_collection(name=collection_name)
 
     all_data = collection.get(include=["embeddings", "metadatas", "documents"])

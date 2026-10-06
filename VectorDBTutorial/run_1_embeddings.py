@@ -1,4 +1,5 @@
 # ============================================================
+# Run like: python -m VectorDBTutorial.run_1_embeddings
 #  SCRIPT 01 — What Is an Embedding?
 #
 #  This script answers the question:
@@ -13,13 +14,15 @@
 import os
 import sys
 import math
-from envsettings import getEmbeddingModel, getOpenAIClient
+from cofiguration import env_settings
+from cofiguration.azure_framework import get_openAIClient
 
 def embed_text(text):
-    client = getOpenAIClient()
+    #client = getOpenAIClient()
+    client = get_openAIClient()
     response = client.embeddings.create(
         input=text,
-        model=getEmbeddingModel()
+        model=env_settings.TEXT_EMBEDDING_MODEL
     )
     return response.data[0].embedding
 

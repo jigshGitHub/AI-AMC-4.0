@@ -1,4 +1,5 @@
 # ============================================================
+# Run like this python -m VectorDBTutorial.run_5_query
 #  SCRIPT 05 — Querying the Vector Database
 #
 #  This script shows exactly how retrieval works:
@@ -11,7 +12,13 @@
 import os
 import sys
 import chromadb
-from envsettings import getEmbeddingModel, getOpenAIClient, getChromaDBDir
+from cofiguration import env_settings
+from cofiguration.azure_framework import get_openAIClient
+from pathlib import Path
+
+CURRENT_FILE = Path(__file__).resolve()
+PARENT_DIR = CURRENT_FILE.parent
+CHROMA_DB_DIR = PARENT_DIR / env_settings.CHROMA_DB_DIR
 
 # ── Demo queries ─────────────────────────────────────────────
 DEMO_QUERIES = [
@@ -24,10 +31,10 @@ DEMO_QUERIES = [
 
 TOP_K = 3   # How many results to return for each query
 def embed_text(text: str) -> list[float]:
-    client = getOpenAIClient()
+    client = get_openAIClient()
     response = client.embeddings.create(
         input=text,
-        model=getEmbeddingModel()
+        model=env_settings.TEXT_EMBEDDING_MODEL
     )
     return response.data[0].embedding
 
@@ -85,10 +92,9 @@ if __name__ == "__main__":
     if os.system("cls" if os.name == "nt" else "clear") is not None:
         pass  # Clear the console for better readability
 
-    chroma_db_dir = getChromaDBDir()
     collection_name = "EMBEDDINGS_COLLECTION"
 
-    db = chromadb.PersistentClient(path=chroma_db_dir)
+    db = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     collection = db.get_or_create_collection(name=collection_name)
 
     # ── Run all demo queries ─────────────────────────────────────

@@ -16,9 +16,11 @@ AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_RESOURCE_ENDPOINT = os.getenv("AZURE_RESOURCE_ENDPOINT")
 DATA_DIR = os.getenv("DATA_DIR")
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR")
 LLM_MODEL = os.getenv("LLM_MODEL")
 DEBUG = bool(os.getenv("DEBUG", False))
 TOP_K = int(os.getenv("TOP_K", 4))
+TEXT_EMBEDDING_MODEL=os.getenv("TEXT_EMBEDDING_MODEL")
 # Temperature should be a float between 0.0 and 1.0. Use 0.0 for deterministic outputs.
 try:
 	TEMPERATURE = float(os.getenv("TEMPERATURE", 0.0))

@@ -5,7 +5,6 @@ from typing import Iterable
 import pdfplumber
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from cofiguration.langchain_framework import get_embedding_llm
 from pathlib import Path
@@ -95,7 +94,6 @@ def get_text_splitter(chunk_size: int = CHUNK_SIZE, chunk_overlap: int = CHUNK_O
 
 def get_embedding_model(model_name: str = EMBEDDING_MODEL):
     """Return an embedding model instance based on the specified model name."""
-    # return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
     return get_embedding_llm()
 
 def create_vector_store(chunks: list[Document], embedding_model) -> Chroma:
@@ -129,6 +127,8 @@ def perform_ingetion(data_dir: str) :
         print("Ingestion complete. Your documents are ready for retrieval.")
 
 if __name__ == "__main__":
+
+    os.system("cls" if os.name == "nt" else "clear")
     print("\n" + "=" * 60)
     print("  SEMANTIC SEARCH WITH LANGCHAIN")
     print("  Powered by LangChain + OpenAI")
@@ -136,7 +136,9 @@ if __name__ == "__main__":
     print("\nThis is a simple example of how to load a PDF document and prepare it for semantic search using LangChain.\n")
     print("The PDF document is loaded and split into smaller chunks, which can then be embedded and indexed for efficient retrieval.\n")
 
-    perform_ingetion(DATA_DIR)
+    user_input = input("\nDo you want to perform ingetion (Y/N): ").strip()
+    if user_input.lower() in ("y", "yes"):
+        perform_ingetion(DATA_DIR)
 
     vector_store = Chroma(
         persist_directory=CHROMA_DB_DIR,

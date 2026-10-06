@@ -1,4 +1,5 @@
 # ============================================================
+# Run like this python -m VectorDBTutorial.run_3_inspect_vectordb
 #  SCRIPT 03 — Inspecting the Vector Database
 #
 #  This script shows what is ACTUALLY inside ChromaDB:
@@ -13,7 +14,12 @@ import sys
 import time
 import chromadb
 
-from envsettings import getChromaDBDir
+from cofiguration import env_settings
+from pathlib import Path
+
+CURRENT_FILE = Path(__file__).resolve()
+PARENT_DIR = CURRENT_FILE.parent
+CHROMA_DB_DIR = PARENT_DIR / env_settings.CHROMA_DB_DIR
 
 def cosine_similarity(a, b):
     dot   = sum(x * y for x, y in zip(a, b))
@@ -25,10 +31,9 @@ if __name__ == "__main__":
     if os.system("cls" if os.name == "nt" else "clear") is not None:
         pass  # Clear the console for better readability
 
-    chroma_db_dir = getChromaDBDir()
     collection_name = "EMBEDDINGS_COLLECTION"
 
-    db = chromadb.PersistentClient(path=chroma_db_dir)
+    db = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     collection = db.get_or_create_collection(name=collection_name)
 
     total = collection.count()
