@@ -30,7 +30,7 @@ def get_llm():
             )
     else:
         api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key or api_key.startswith("sk-proj"):
+        if not api_key or not api_key.startswith("sk-proj"):
             raise ValueError("OPENAI_API_KEY not set! Copy .env.example to .env and add your key.")
             sys.exit(1)
         llm = ChatOpenAI(
