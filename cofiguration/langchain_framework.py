@@ -7,18 +7,27 @@ from azure.identity import DefaultAzureCredential
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 
+from cofiguration.proxy_util import get_authenticated_clients
 load_dotenv()
 
 def get_llm():
+    custom_sync_client, custom_async_client = get_authenticated_clients(
+        proxy_url= str(os.getenv("PROXY_URL")),
+        timeout=45.0  # Adjust this value based on how complex your agent tasks are
+    )
+
     llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
     if llm_provider == "azure":
         if os.getenv("AZURE_CREDENTIAL") == 'default':
             llm = AzureAIOpenAIApiChatModel(
-                project_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                project_endpoint=os.getenv("AZURE_RESOURCE_ENDPOINT"),
                 credential = DefaultAzureCredential(exclude_environment_credential=True, exclude_managed_identity_credential=True) ,
                 model=os.getenv("LLM_MODEL", "gpt-4o"),
                 temperature=0.7,
                 verbose=True,
+                http_client=custom_sync_client,          # Standard LangChain execution path (.invoke)
+                http_async_client=custom_async_client, # LangGraph streaming runtime execution path
+                http_socket_options=(),
             )
         else:
             llm = AzureAIOpenAIApiChatModel(
@@ -27,6 +36,9 @@ def get_llm():
                 model=os.getenv("LLM_MODEL", "gpt-4o"),
                 temperature=0.7,
                 verbose=True,
+                http_client=custom_sync_client,          # Standard LangChain execution path (.invoke)
+                http_async_client=custom_async_client, # LangGraph streaming runtime execution path
+                http_socket_options=(),
             )
     else:
         api_key = os.getenv("OPENAI_API_KEY")
