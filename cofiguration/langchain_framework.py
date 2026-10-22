@@ -7,7 +7,8 @@ from azure.identity import DefaultAzureCredential
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 
-from cofiguration.proxy_util import get_authenticated_clients
+# from cofiguration.proxy_util import get_authenticated_clients
+from core import get_authenticated_clients
 load_dotenv()
 
 def get_llm():
